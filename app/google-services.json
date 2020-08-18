@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "611172351780",
+    "firebase_url": "https://passwordsaver-893d4.firebaseio.com",
+    "project_id": "passwordsaver-893d4",
+    "storage_bucket": "passwordsaver-893d4.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:611172351780:android:52d34a247e2abff1b5bdb1",
+        "android_client_info": {
+          "package_name": "com.rohitthebest.passwordsaver"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "611172351780-i7fnl7ov3o7b6n7n017atg819ur3clh8.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDc_tRhwuvAaCrjkI7JcW3kp9D0emIVtWo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "611172351780-i7fnl7ov3o7b6n7n017atg819ur3clh8.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">PasswordSaver</string>
+    <string name="offline_text">Your Password will be saved in your Internal device. No Internet connection required.\n\nNote: After you uninstall this app you will lose all your data.</string>
+    <string name="online_text">Your password will be saved in device as well as on cloud database. Internet connection is required only while adding a new password.\n\nNote : \n1. Your password will be safe even if you uninstall this app.\n2. The password is encrypted in the such a way that no one can see it (including us).</string>
+    <string name="trySignIn_text">If you ever installed this app before, try signIn, your saved passwords will be restored.</string>
+    <string name="setup">Setup</string>
+    <string name="offline">Offline</string>
+    <string name="online">Online</string>
+    <string name="next">Next</string>
+    <string name="menubutton">menuButton</string>
+    <string name="appSetting">AppSettings</string>
+</resources>

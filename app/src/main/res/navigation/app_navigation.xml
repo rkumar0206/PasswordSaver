@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/app_navigation"
+    app:startDestination="@id/appPasswordFragment">
+
+    <fragment
+        android:id="@+id/introductionFragment"
+        android:name="com.rohitthebest.passwordsaver.ui.fragments.IntroductionFragment"
+        android:label="fragment_introduction"
+        tools:layout="@layout/fragment_introduction" >
+        <action
+            android:id="@+id/action_introductionFragment_to_appPasswordFragment"
+            app:destination="@id/appPasswordFragment"
+
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right"
+            />
+
+        <action
+            android:id="@+id/action_introductionFragment_to_loginFragment"
+            app:destination="@id/loginFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.rohitthebest.passwordsaver.ui.fragments.HomeFragment"
+        android:label="fragment_home"
+        tools:layout="@layout/fragment_home" >
+        <action
+            android:id="@+id/action_homeFragment_to_addPasswordFragment"
+            app:destination="@id/addPasswordFragment"
+
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/fade_out" />
+
+    </fragment>
+    <fragment
+        android:id="@+id/addPasswordFragment"
+        android:name="com.rohitthebest.passwordsaver.ui.fragments.AddPasswordFragment"
+        android:label="fragment_add_password"
+        tools:layout="@layout/fragment_add_password" />
+    <fragment
+        android:id="@+id/appPasswordFragment"
+        android:name="com.rohitthebest.passwordsaver.ui.fragments.AppPasswordFragment"
+        android:label="fragment_app_password"
+        tools:layout="@layout/fragment_app_password" >
+        <action
+            android:id="@+id/action_appPasswordFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="true"
+
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/fade_out"
+            />
+        <action
+            android:id="@+id/action_appPasswordFragment_to_introductionFragment"
+            app:destination="@id/introductionFragment"
+            app:popUpTo="@id/introductionFragment"
+            app:popUpToInclusive="true"
+
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/fade_out"
+            />
+    </fragment>
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.rohitthebest.passwordsaver.ui.fragments.LoginFragment"
+        android:label="LoginFragment" />
+</navigation>
