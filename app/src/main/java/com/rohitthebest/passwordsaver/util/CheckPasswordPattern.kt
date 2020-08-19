@@ -6,7 +6,7 @@ class CheckPasswordPattern {
 
     companion object {
         private val PASSWORD_PATTERN: Pattern =
-            Pattern.compile("^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[@#\$%^&+=])(?=\\S+\$).{6,}\$")
+            Pattern.compile("^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[@#\$%^&+=])(?=\\S+\$).{8,}\$")
 
         private val a_digit_pattern: Pattern =
             Pattern.compile(".*?[0-9].*?")

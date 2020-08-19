@@ -52,7 +52,10 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
             binding.saveBtn.id -> {
 
-                //todo : save password to database
+                if (validateForm()) {
+
+                    //todo : save password to database
+                }
             }
 
             binding.backBtn.id -> {
@@ -77,6 +80,24 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
             Functions.closeKeyboard(requireActivity())
         }
+    }
+
+    private fun validateForm(): Boolean {
+
+        if (binding.accountNameET.editText?.text.toString().trim().isEmpty()) {
+
+            binding.accountNameET.error = EDITTEXT_EMPTY_MESSAGE
+            return false
+        }
+
+        if (binding.passwordET.editText?.text.toString().trim().isEmpty()) {
+
+            binding.passwordET.error = EDITTEXT_EMPTY_MESSAGE
+            return false
+        }
+
+        return binding.accountNameET.error == null &&
+                binding.passwordET.error == null
     }
 
     private fun textWatcher() {
