@@ -294,6 +294,7 @@ class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, Vie
         _binding = null
     }
 
+/*
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -308,6 +309,7 @@ class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, Vie
 
         requireActivity().onBackPressedDispatcher.addCallback(callback)
     }
+*/
 
 
 }

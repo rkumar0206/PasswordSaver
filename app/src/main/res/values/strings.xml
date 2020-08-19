@@ -9,4 +9,15 @@
     <string name="next">Next</string>
     <string name="menubutton">menuButton</string>
     <string name="appSetting">AppSettings</string>
+    <string name="add_password">Add Password</string>
+    <string name="backbutton">backButton</string>
+    <string name="save_button">save Button</string>
+    <string name="account_name">Account name</string>
+    <string name="password">Password</string>
+    <string name="check_password_strength">Check password strength</string>
+    <string name="mixture_of_both_uppercase_and_lowercase_characters">Mixture of both uppercase and lowercase characters</string>
+    <string name="one_special_character_amp"><![CDATA[One special character (!@#?&=+)]]></string>
+    <string name="at_least_8_characters">At least 8 characters</string>
+    <string name="don_t_use_lt_or_gt"><![CDATA[Don\'t use < or >]]></string>
+    <string name="a_digit">A digit</string>
 </resources>

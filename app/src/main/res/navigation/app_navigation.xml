@@ -18,11 +18,8 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/slide_out_right"
-            />
+            app:popUpToInclusive="false" />
 
-        <action
-            android:id="@+id/action_introductionFragment_to_loginFragment"
-            app:destination="@id/loginFragment" />
     </fragment>
     <fragment
         android:id="@+id/homeFragment"
@@ -53,28 +50,21 @@
             android:id="@+id/action_appPasswordFragment_to_homeFragment"
             app:destination="@id/homeFragment"
 
-            app:popUpTo="@id/homeFragment"
-            app:popUpToInclusive="true"
-
             app:enterAnim="@anim/fade_in"
+
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/fade_out"
-            />
+            app:popUpToInclusive="false" />
         <action
             android:id="@+id/action_appPasswordFragment_to_introductionFragment"
             app:destination="@id/introductionFragment"
-            app:popUpTo="@id/introductionFragment"
-            app:popUpToInclusive="true"
-
             app:enterAnim="@anim/fade_in"
+
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/fade_out"
-            />
+            app:popUpTo="@id/appPasswordFragment"
+            app:popUpToInclusive="true" />
     </fragment>
-    <fragment
-        android:id="@+id/loginFragment"
-        android:name="com.rohitthebest.passwordsaver.ui.fragments.LoginFragment"
-        android:label="LoginFragment" />
 </navigation>
