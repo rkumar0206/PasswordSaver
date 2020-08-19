@@ -15,7 +15,7 @@ import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class HomeFragment : Fragment(R.layout.fragment_home) {
+class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener {
 
     private val viewModel: AppSettingViewModel by viewModels()
 
@@ -37,34 +37,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         super.onViewCreated(view, savedInstanceState)
 
 
-        getAppSettingsData()
+        initListeners()
+
     }
 
-    private fun getAppSettingsData() {
+    private fun initListeners() {
 
-/*
-        try {
-
-            viewModel.getAppSettingByID().observe(viewLifecycleOwner, Observer {
-
-                if (it.isEmpty()) {
-
-                    findNavController().navigate(R.id.action_homeFragment_to_introductionFragment)
-
-                } else {
-
-                    if (it[0].appPassword == "") {
-
-                        findNavController().navigate(R.id.action_homeFragment_to_appPasswordFragment)
-                    }
-                }
-            })
-
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-*/
-
+        binding.addPasswordFAB.setOnClickListener(this)
+        binding.menuBtn.setOnClickListener(this)
     }
 
 
@@ -74,19 +54,21 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         _binding = null
     }
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
 
-        val callback = object : OnBackPressedCallback(true) {
+    override fun onClick(v: View?) {
 
-            override fun handleOnBackPressed() {
+        when(v?.id){
 
-                requireActivity().finish()
+            binding.addPasswordFAB.id -> {
 
+                findNavController().navigate(R.id.action_homeFragment_to_addPasswordFragment)
+            }
+
+            binding.menuBtn.id -> {
+
+                //todo : Show popup menu
             }
         }
-
-        requireActivity().onBackPressedDispatcher.addCallback(callback)
     }
 
 
