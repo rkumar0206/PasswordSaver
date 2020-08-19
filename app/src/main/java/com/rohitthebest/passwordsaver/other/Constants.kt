@@ -11,4 +11,5 @@ object Constants {
     const val APP_SETTING_ID = 5
     const val NOTIFICATION_CHANNEL_ID = "notificationChannelID"
     const val APP_SETTING_SERVICE_MESSAGE = "com.APP_SETTING_SERVICE_MESSAGE"
+    const val PASSWORD_DATABASE_NAME = "com_rohitthebest_passwordsaver_PASSWORD_DATABASE_NAME"
 }
