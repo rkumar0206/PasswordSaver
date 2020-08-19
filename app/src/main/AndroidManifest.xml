@@ -21,6 +21,7 @@
             </intent-filter>
         </activity>
         <service android:name=".services.UploadAppSettingsService"/>
+        <service android:name=".services.UploadSavedPasswordService"/>
     </application>
 
 </manifest>

@@ -14,4 +14,5 @@ object Constants {
     const val PASSWORD_DATABASE_NAME = "com_rohitthebest_passwordsaver_PASSWORD_DATABASE_NAME"
     const val SYNCED = "true"
     const val NOT_SYNCED = "false"
+    const val SAVED_PASSWORD_SERVICE_MESSAGE = "com_rohitTheBes_SAVED_PASSWORD_SERVICE_MESSAGE"
 }

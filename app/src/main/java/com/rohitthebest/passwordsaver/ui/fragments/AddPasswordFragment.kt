@@ -1,14 +1,17 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import com.google.gson.Gson
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
@@ -16,11 +19,13 @@ import com.rohitthebest.passwordsaver.databinding.FragmentAddPasswordBinding
 import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
+import com.rohitthebest.passwordsaver.other.Constants.SAVED_PASSWORD_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.Functions
 import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
+import com.rohitthebest.passwordsaver.services.UploadSavedPasswordService
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import com.rohitthebest.passwordsaver.util.CheckPasswordPattern
@@ -154,7 +159,13 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                 password.isSynced = SYNCED
                 passwordViewModel.insert(password)
 
-                //Create Service for inserting on firestoreDatabase
+                val gson = Gson()
+                val passwordString = gson.toJson(password)
+
+                val foregroundServiceIntent = Intent(requireContext(), UploadSavedPasswordService::class.java)
+                foregroundServiceIntent.putExtra(SAVED_PASSWORD_SERVICE_MESSAGE, passwordString)
+
+                ContextCompat.startForegroundService(requireContext(), foregroundServiceIntent)
 
                 requireActivity().onBackPressed()
 
