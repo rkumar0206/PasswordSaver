@@ -8,9 +8,18 @@ data class Password(
     var accountName: String?,
     var password: String?,
     var uid: String?,
+    var isSynced : String,
     var timeStamp: Long? = System.currentTimeMillis()
 ) {
 
     @PrimaryKey(autoGenerate = true)
     var id: Int? = null
+
+    constructor() : this(
+        "",
+        "",
+        "",
+        "",
+        null
+    )
 }
