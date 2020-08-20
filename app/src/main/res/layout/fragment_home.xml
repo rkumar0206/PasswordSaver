@@ -2,17 +2,16 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/homeFragCoordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.fragments.HomeFragment"
     android:background="@color/backgroundColor"
-    >
+    tools:context=".ui.fragments.HomeFragment">
 
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
+        android:layout_height="match_parent">
 
         <androidx.cardview.widget.CardView
             android:id="@+id/cardView5"
@@ -72,14 +71,14 @@
         android:id="@+id/addPasswordFAB"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:clickable="true"
         android:layout_gravity="bottom|end"
         android:layout_margin="16dp"
-        app:tint="@color/primary_light"
         android:backgroundTint="@color/primary_dark"
-        android:src="@drawable/ic_baseline_add_24"
+        android:clickable="true"
         android:focusable="true"
+        android:src="@drawable/ic_baseline_add_24"
         android:tooltipText="Add Password"
+        app:tint="@color/primary_light"
         tools:targetApi="o" />
 
 

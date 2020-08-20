@@ -8,7 +8,8 @@ data class Password(
     var accountName: String?,
     var password: String?,
     var uid: String?,
-    var isSynced : String,
+    var isSynced: String,
+    var key: String?,
     var timeStamp: Long? = System.currentTimeMillis()
 ) {
 
@@ -16,6 +17,7 @@ data class Password(
     var id: Int? = null
 
     constructor() : this(
+        "",
         "",
         "",
         "",

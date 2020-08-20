@@ -10,18 +10,24 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.gson.Gson
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
+import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
+import com.rohitthebest.passwordsaver.services.UploadSavedPasswordService
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
@@ -174,7 +180,98 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onDeleteClick(password: Password?) {
 
-        //todo : handle delete
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Are Yo Sure?")
+            .setPositiveButton("Delete") { dialogInterface, _ ->
+
+                deletePassword(password)
+            }
+            .setNegativeButton("Cancel") { dialogInterface, _ ->
+
+                dialogInterface.dismiss()
+            }.create()
+            .show()
+    }
+
+    private fun deletePassword(password: Password?) {
+
+        password?.let {
+
+            passwordViewModel.delete(password)
+
+            if (password.key == "") {
+
+                try {
+                    Snackbar.make(
+                        binding.homeFragCoordinatorLayout,
+                        "Password Deleted",
+                        Snackbar.LENGTH_LONG
+                    )
+                        .setAction("Undo") {
+
+                            passwordViewModel.insert(password)
+                            showToast(requireContext(), "Password Restored")
+                        }
+                        .show()
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+
+            } else {
+
+                password.key?.let { key ->
+                    FirebaseFirestore.getInstance()
+                        .collection(getString(R.string.savedPasswords))
+                        .document(key)
+                        .delete()
+                        .addOnSuccessListener {
+
+                            try {
+                                Snackbar.make(
+                                    binding.homeFragCoordinatorLayout,
+                                    "Password Deleted",
+                                    Snackbar.LENGTH_LONG
+                                )
+                                    .setAction("Undo") {
+
+                                        passwordViewModel.insert(password)
+
+                                        val gson = Gson()
+                                        val passwordString = gson.toJson(password)
+
+                                        val foregroundServiceIntent =
+                                            Intent(
+                                                requireContext(),
+                                                UploadSavedPasswordService::class.java
+                                            )
+                                        foregroundServiceIntent.putExtra(
+                                            Constants.SAVED_PASSWORD_SERVICE_MESSAGE,
+                                            passwordString
+                                        )
+
+                                        ContextCompat.startForegroundService(
+                                            requireContext(),
+                                            foregroundServiceIntent
+                                        )
+
+                                        showToast(requireContext(), "Password Restored")
+                                    }
+                                    .show()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+
+                        }
+                        .addOnFailureListener {
+
+                            showToast(requireContext(), "${it.message}")
+                        }
+                }
+            }
+
+        }
+
     }
 
     override fun onEditClick(password: Password?) {

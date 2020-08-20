@@ -33,6 +33,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 @AndroidEntryPoint
 class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnClickListener {
@@ -137,13 +138,14 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                 accountName = binding.accountNameET.editText?.text.toString().trim()
                 this.password = encryptedPassword
                 uid = ""
+                key = ""
                 isSynced = NOT_SYNCED
                 timeStamp = System.currentTimeMillis()
             }
 
             passwordViewModel.insert(password)
 
-             requireActivity().onBackPressed()
+            requireActivity().onBackPressed()
         } else {
 
             password.apply {
@@ -151,18 +153,23 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                 this.password = encryptedPassword
                 uid = appSetting?.uid
                 isSynced = NOT_SYNCED
+                key = ""
                 timeStamp = System.currentTimeMillis()
             }
 
             if (isInternetAvailable(requireContext())) {
 
                 password.isSynced = SYNCED
-                passwordViewModel.insert(password)
+                password.key =
+                    "${System.currentTimeMillis().toString(36)}_${Random.nextInt(1000, 1000000)
+                        .toString(36)}_${password.uid}"
 
+                passwordViewModel.insert(password)
                 val gson = Gson()
                 val passwordString = gson.toJson(password)
 
-                val foregroundServiceIntent = Intent(requireContext(), UploadSavedPasswordService::class.java)
+                val foregroundServiceIntent =
+                    Intent(requireContext(), UploadSavedPasswordService::class.java)
                 foregroundServiceIntent.putExtra(SAVED_PASSWORD_SERVICE_MESSAGE, passwordString)
 
                 ContextCompat.startForegroundService(requireContext(), foregroundServiceIntent)
@@ -172,6 +179,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             } else {
 
                 password.isSynced = NOT_SYNCED
+                password.key = ""
                 passwordViewModel.insert(password)
 
                 requireActivity().onBackPressed()

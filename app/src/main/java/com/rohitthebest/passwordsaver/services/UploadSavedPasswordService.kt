@@ -17,7 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-import kotlin.random.Random
 
 class UploadSavedPasswordService : Service() {
 
@@ -44,17 +43,14 @@ class UploadSavedPasswordService : Service() {
 
         val docRef = FirebaseFirestore.getInstance()
             .collection(getString(R.string.savedPasswords))
-            .document(
-                "${System.currentTimeMillis().toString(36)}_${Random.nextInt(1000, 1000000)
-                    .toString(36)}_${password.uid}"
-            )
+            .document(password.key!!)
 
         CoroutineScope(Dispatchers.IO).launch {
 
             val flag: Boolean = uploadToFirestore(docRef, password)
 
             if (flag) {
-                Log.i(TAG, "Upload Saved Password Successful")
+                Log.i(TAG, "Uploaded Saved Password Successful")
                 stopSelf()
             }
         }
