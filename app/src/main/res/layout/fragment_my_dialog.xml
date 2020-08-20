@@ -24,7 +24,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="serif"
-                android:text="Please enter password"
+                android:padding="10dp"
+                android:text="Please enter app password"
                 android:textColor="@color/primary_light"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -38,7 +39,7 @@
 
     <Button
         android:id="@+id/confirmBtn"
-        android:layout_width="0dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
         android:layout_marginBottom="8dp"

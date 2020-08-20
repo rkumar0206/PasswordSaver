@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -17,6 +18,7 @@ import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
+import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -35,6 +37,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     private val binding get() = _binding!!
 
     private lateinit var mAdapter: SavedPasswordRVAdapter
+    private var pass: String? = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -139,12 +142,12 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onSeePasswordBtnClickListener(password: Password?) {
 
+        pass = password?.password
+
         val dialogFragment = MyDialogFragment().getInstance()
         dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE)
 
         parentFragmentManager.let { dialogFragment.show(it, "MyDialogFragment") }
-
-        showToast(requireContext(), "Password visibility clicked")
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -155,8 +158,31 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
         if (requestCode == TARGET_FRAGMENT_REQUEST_CODE) {
 
-            //todo : do something with received text
-            //data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let { showToast(requireContext(), it) }
+            data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
+
+                if (it != getString(R.string.f)) {
+
+                    var decryptedPass: String? = ""
+                    try {
+
+                        decryptedPass = EncryptData().decryptAES(pass, it)
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("Your Password")
+                        .setMessage(decryptedPass)
+                        .setPositiveButton("Ok") { dialogInterface, _ ->
+                            dialogInterface.dismiss()
+                        }.create()
+                        .show()
+
+                } else {
+                    showToast(requireContext(), "Password does not match!!!")
+                }
+            }
         }
     }
 
