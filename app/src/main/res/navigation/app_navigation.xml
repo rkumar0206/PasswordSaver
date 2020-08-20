@@ -40,7 +40,12 @@
         android:id="@+id/addPasswordFragment"
         android:name="com.rohitthebest.passwordsaver.ui.fragments.AddPasswordFragment"
         android:label="fragment_add_password"
-        tools:layout="@layout/fragment_add_password" />
+        tools:layout="@layout/fragment_add_password">
+        <argument
+            android:name="editPasswordMessage"
+            app:argType="string"
+            app:nullable="true" />
+    </fragment>
     <fragment
         android:id="@+id/appPasswordFragment"
         android:name="com.rohitthebest.passwordsaver.ui.fragments.AppPasswordFragment"

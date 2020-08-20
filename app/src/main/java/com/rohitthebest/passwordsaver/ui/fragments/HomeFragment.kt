@@ -195,15 +195,20 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
         if (isInternetAvailable(requireContext())) {
 
-            showToast(requireContext(), " Syncing...")
+            if (password?.isSynced != SYNCED) {
+                showToast(requireContext(), " Syncing...")
 
-            password?.isSynced = SYNCED
-            password?.key =
-                "${System.currentTimeMillis().toString(36)}_${Random.nextInt(1000, 1000000)
-                    .toString(36)}_${password?.uid}"
+                password?.isSynced = SYNCED
+                password?.key =
+                    "${System.currentTimeMillis().toString(36)}_${Random.nextInt(1000, 1000000)
+                        .toString(36)}_${password?.uid}"
 
-            uploadToFirebase(password)
+                passwordViewModel.insert(password!!)
+                uploadToFirebase(password)
+            } else {
 
+                showToast(requireContext(), "Already Synced")
+            }
         } else {
             showToast(requireContext(), NO_INTERNET_MESSAGE)
         }
@@ -307,7 +312,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onEditClick(password: Password?) {
 
-        //todo : edit password
+
     }
 
     private fun uploadToFirebase(password: Password?) {
@@ -432,7 +437,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         }
     }
 
-
     override fun onMenuItemClick(item: MenuItem?): Boolean {
 
         when (item?.itemId) {
@@ -467,6 +471,5 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
         _binding = null
     }
-
 
 }
