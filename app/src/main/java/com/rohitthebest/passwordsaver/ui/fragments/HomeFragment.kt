@@ -31,6 +31,7 @@ import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Functions.Companion.closeKeyboard
+import com.rohitthebest.passwordsaver.other.Functions.Companion.convertToJson
 import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
@@ -312,7 +313,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onEditClick(password: Password?) {
 
+        val action = HomeFragmentDirections
+            .actionHomeFragmentToAddPasswordFragment(convertToJson(password))
 
+        findNavController().navigate(action)
     }
 
     private fun uploadToFirebase(password: Password?) {

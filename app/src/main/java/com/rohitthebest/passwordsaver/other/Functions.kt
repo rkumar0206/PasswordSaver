@@ -5,6 +5,9 @@ import android.content.Context
 import android.util.Log
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.util.CheckNetworkConnection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -29,27 +32,6 @@ class Functions {
             return CheckNetworkConnection().isInternetAvailable(context)
         }
 
-        /*fun convertDrawableToBitmap(resources: Resources, imageId: Int): Bitmap? {
-
-            var bitmap: Bitmap? = null
-            try {
-                bitmap = BitmapFactory.decodeResource(resources, imageId)
-            } catch (e: java.lang.Exception) {
-                e.printStackTrace()
-            }
-            return bitmap
-        }*/
-
-
-        /*fun shareAsText(message: String?, subject: String?, context: Context) {
-
-            val intent = Intent(Intent.ACTION_SEND)
-            intent.type = "text/plain"
-            intent.putExtra(Intent.EXTRA_SUBJECT, subject)
-            intent.putExtra(Intent.EXTRA_TEXT, message)
-            context.startActivity(Intent.createChooser(intent, "Share Via"))
-
-        }*/
 
         suspend fun closeKeyboard(activity: Activity) {
             try {
@@ -71,19 +53,19 @@ class Functions {
             }
         }
 
-        /* fun showAlertMessage(context: Context, message: String? = "", title: String? = "") {
+        fun convertToJson(password: Password?): String? {
 
-             AlertDialog.Builder(context)
-                 .setTitle(title)
-                 .setMessage(message)
-                 .setPositiveButton("Ok") { dialog, _ ->
+            val gson = Gson()
+            return gson.toJson(password)
+        }
 
-                     dialog.dismiss()
-                 }
-                 .create()
-                 .show()
+        fun convertFromJsonToPassword(jsonString: String): Password? {
 
-         }*/
+            val gson = Gson()
+            val type = object : TypeToken<Password?>() {}.type
+
+            return gson.fromJson(jsonString, type)
+        }
 
     }
 }
