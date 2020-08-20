@@ -1,12 +1,14 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -14,12 +16,14 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.rohitthebest.passwordsaver.R
+import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
+import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
@@ -30,11 +34,13 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     private val TARGET_FRAGMENT_MESSAGE = "message"
 
-    //private val viewModel: AppSettingViewModel by viewModels()
+    private val viewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
 
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
+
+    private var appSetting: AppSetting? = null
 
     private lateinit var mAdapter: SavedPasswordRVAdapter
     private var pass: String? = ""
@@ -56,6 +62,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
         mAdapter = SavedPasswordRVAdapter()
 
+        getAppSetting()
+
         GlobalScope.launch {
 
             delay(150)
@@ -66,6 +74,17 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         }
 
         initListeners()
+    }
+
+    private fun getAppSetting() {
+
+        viewModel.getAppSettingByID().observe(viewLifecycleOwner, Observer {
+
+            if (it.isNotEmpty()) {
+
+                appSetting = it[0]
+            }
+        })
     }
 
     private fun getAllSavedPassword() {
@@ -120,14 +139,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onItemClickListener(password: Password?) {
 
-        showToast(
-            requireContext(), "accountName : ${password?.accountName}\n" +
-                    "password : ${password?.password}\n" +
-                    "isSynced : ${password?.isSynced}\n" +
-                    "uid : ${password?.uid}\\n" +
-                    "timeStamp : ${password?.timeStamp}"
-            , Toast.LENGTH_LONG
-        )
+        //todo : handle click listener
     }
 
     override fun onSyncBtnClickListener(password: Password?) {
@@ -137,7 +149,17 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onCopyBtnClickListener(password: Password?) {
 
-        showToast(requireContext(), "Copy Btn Clicked")
+        val clipboardManager: ClipboardManager =
+            requireActivity().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+        val clipData =
+            ClipData.newPlainText(
+                "password",
+                EncryptData().decryptAES(password?.password, appSetting?.appPassword)
+            )
+
+        clipboardManager.setPrimaryClip(clipData)
+        showToast(requireContext(), "Copied Password")
     }
 
     override fun onSeePasswordBtnClickListener(password: Password?) {
@@ -148,6 +170,16 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE)
 
         parentFragmentManager.let { dialogFragment.show(it, "MyDialogFragment") }
+    }
+
+    override fun onDeleteClick(password: Password?) {
+
+        //todo : handle delete
+    }
+
+    override fun onEditClick(password: Password?) {
+
+        //todo : edit password
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

@@ -1,8 +1,6 @@
 package com.rohitthebest.passwordsaver.ui.adapters
 
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -17,7 +15,8 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
     private var mListener: OnClickListener? = null
 
     inner class SavedPasswordViewHolder(private val itemBinding: SavedPasswordAdapterLayoutBinding) :
-        RecyclerView.ViewHolder(itemBinding.root), View.OnClickListener {
+        RecyclerView.ViewHolder(itemBinding.root), View.OnClickListener,
+        View.OnCreateContextMenuListener, MenuItem.OnMenuItemClickListener {
 
         fun setData(password: Password?) {
 
@@ -50,6 +49,8 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
             itemBinding.copyBtn.setOnClickListener(this)
             itemBinding.syncBtn.setOnClickListener(this)
             itemBinding.visibilityBtn.setOnClickListener(this)
+
+            itemBinding.cardView.setOnCreateContextMenuListener(this)
         }
 
         override fun onClick(v: View?) {
@@ -88,6 +89,45 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
                     }
                 }
             }
+        }
+
+        override fun onCreateContextMenu(
+            menu: ContextMenu?,
+            view: View?,
+            menuInfo: ContextMenu.ContextMenuInfo?
+        ) {
+
+            menu?.setHeaderTitle("Select Action")
+
+            val delete = menu?.add(Menu.NONE, 1, 1, "Delete")
+            delete?.setOnMenuItemClickListener(this)
+
+            val edit = menu?.add(Menu.NONE, 2, 2, "Edit")
+            edit?.setOnMenuItemClickListener(this)
+
+        }
+
+        override fun onMenuItemClick(menuItem: MenuItem?): Boolean {
+
+            when (menuItem?.itemId) {
+                1 -> {
+                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
+
+                        mListener?.onDeleteClick(getItem(absoluteAdapterPosition))
+                    }
+                    return true
+                }
+
+                2 -> {
+
+                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
+
+                        mListener?.onEditClick(getItem(absoluteAdapterPosition))
+                    }
+                    return true
+                }
+            }
+            return false
         }
 
     }
@@ -132,6 +172,8 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
         fun onSyncBtnClickListener(password: Password?)
         fun onCopyBtnClickListener(password: Password?)
         fun onSeePasswordBtnClickListener(password: Password?)
+        fun onDeleteClick(password: Password?)
+        fun onEditClick(password: Password?)
     }
 
     fun setOnClickListener(listener: OnClickListener) {
