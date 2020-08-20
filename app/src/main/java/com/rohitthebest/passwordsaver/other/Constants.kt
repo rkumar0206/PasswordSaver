@@ -16,4 +16,5 @@ object Constants {
     const val NOT_SYNCED = "false"
     const val SAVED_PASSWORD_SERVICE_MESSAGE = "com_rohitTheBes_SAVED_PASSWORD_SERVICE_MESSAGE"
     const val TARGET_FRAGMENT_REQUEST_CODE = 12
+    const val UPDATE_PASSWORD_SERVICE_MESSAGE = "com_rohitTheBes_UPDATE_PASSWORD_SERVICE_MESSAGE"
 }

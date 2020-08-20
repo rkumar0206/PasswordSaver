@@ -22,6 +22,7 @@
         </activity>
         <service android:name=".services.UploadAppSettingsService"/>
         <service android:name=".services.UploadSavedPasswordService"/>
+        <service android:name=".services.UpdatePasswordService" />
     </application>
 
 </manifest>

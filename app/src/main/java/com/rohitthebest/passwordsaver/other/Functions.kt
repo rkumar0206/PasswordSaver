@@ -59,7 +59,7 @@ class Functions {
             return gson.toJson(password)
         }
 
-        fun convertFromJsonToPassword(jsonString: String): Password? {
+        fun convertFromJsonToPassword(jsonString: String?): Password? {
 
             val gson = Gson()
             val type = object : TypeToken<Password?>() {}.type

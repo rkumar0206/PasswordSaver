@@ -7,6 +7,7 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -21,10 +22,14 @@ import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
 import com.rohitthebest.passwordsaver.other.Constants.SAVED_PASSWORD_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.SYNCED
+import com.rohitthebest.passwordsaver.other.Constants.UPDATE_PASSWORD_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.Functions
+import com.rohitthebest.passwordsaver.other.Functions.Companion.convertFromJsonToPassword
+import com.rohitthebest.passwordsaver.other.Functions.Companion.convertToJson
 import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
+import com.rohitthebest.passwordsaver.services.UpdatePasswordService
 import com.rohitthebest.passwordsaver.services.UploadSavedPasswordService
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
@@ -46,6 +51,9 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
     private var appSetting: AppSetting? = null
 
+    private var isForEditing = false
+    private var receivedPassword: Password? = null
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -61,8 +69,51 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
         getAppSetting()
 
+        getMessage()
+
         initListeners()
         textWatcher()
+    }
+
+    private fun getMessage() {
+
+        try {
+            if (!arguments?.isEmpty!!) {
+
+                val args = arguments?.let {
+
+                    AddPasswordFragmentArgs.fromBundle(it)
+                }
+
+                val message = args?.editPasswordMessage
+
+                receivedPassword = convertFromJsonToPassword(message)
+
+                isForEditing = true
+                updateUI(receivedPassword)
+            }
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun updateUI(receivedPassword: Password?) {
+
+        receivedPassword?.let {
+
+            binding.accountNameET.editText?.setText(it.accountName)
+
+            try {
+                binding.passwordET.editText?.setText(
+                    EncryptData().decryptAES(
+                        it.password,
+                        appSetting?.appPassword
+                    )
+                )
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     private fun getAppSetting() {
@@ -97,7 +148,13 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 if (validateForm()) {
 
-                    insertToDatabase()
+                    if (isForEditing) {
+
+                        updatePassword(receivedPassword)
+                    } else {
+
+                        insertToDatabase()
+                    }
                 }
             }
 
@@ -190,6 +247,44 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
         showToast(requireContext(), "Password Saved")
     }
 
+    private fun updatePassword(receivedPassword: Password?) {
+
+        receivedPassword?.accountName = binding.accountNameET.editText?.text.toString().trim()
+        receivedPassword?.password =
+            encryptPassword(binding.passwordET.editText?.text.toString().trim())
+
+        if (receivedPassword?.uid == "" || receivedPassword?.isSynced == NOT_SYNCED) {
+
+            passwordViewModel.insert(receivedPassword)
+
+        } else {
+
+            if (isInternetAvailable(requireContext())) {
+
+                receivedPassword?.let { passwordViewModel.insert(it) }
+
+                val foregroundServiceIntent =
+                    Intent(requireContext(), UpdatePasswordService::class.java)
+                foregroundServiceIntent.putExtra(
+                    UPDATE_PASSWORD_SERVICE_MESSAGE,
+                    convertToJson(receivedPassword)
+                )
+
+                ContextCompat.startForegroundService(requireContext(), foregroundServiceIntent)
+
+            } else {
+
+                showToast(
+                    requireContext(),
+                    "In Online mode you need to have an active internet connection for editing.",
+                    Toast.LENGTH_LONG
+                )
+            }
+
+        }
+        showToast(requireContext(), "Password updated")
+    }
+
     private fun encryptPassword(password: String): String? {
 
         return try {
@@ -237,6 +332,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                     binding.accountNameET.error = null
                 }
+
             }
         })
 
