@@ -1,16 +1,18 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.SearchView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.view.menu.MenuBuilder
+import androidx.appcompat.view.menu.MenuPopupHelper
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -43,7 +45,8 @@ import kotlin.random.Random
 
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
-    SavedPasswordRVAdapter.OnClickListener {
+    SavedPasswordRVAdapter.OnClickListener, android.widget.PopupMenu.OnMenuItemClickListener,
+    PopupMenu.OnMenuItemClickListener {
 
     private val TARGET_FRAGMENT_MESSAGE = "message"
 
@@ -221,16 +224,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         showToast(requireContext(), "Copied Password")
     }
 
-    override fun onSeePasswordBtnClickListener(password: Password?) {
-
-        pass = password?.password
-
-        val dialogFragment = MyDialogFragment().getInstance()
-        dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE)
-
-        parentFragmentManager.let { dialogFragment.show(it, "MyDialogFragment") }
-    }
-
     override fun onDeleteClick(password: Password?) {
 
 
@@ -338,6 +331,15 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         )
     }
 
+    override fun onSeePasswordBtnClickListener(password: Password?) {
+
+        pass = password?.password
+
+        val dialogFragment = MyDialogFragment().getInstance()
+        dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE)
+
+        parentFragmentManager.let { dialogFragment.show(it, "MyDialogFragment") }
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
@@ -391,14 +393,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         binding.menuBtn.setOnClickListener(this)
     }
 
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-
-        _binding = null
-    }
-
-
     override fun onClick(v: View?) {
 
         when (v?.id) {
@@ -410,7 +404,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
             binding.menuBtn.id -> {
 
-                //todo : Show popup menu
+                showPopupMenu(binding.menuBtn)
             }
         }
 
@@ -418,6 +412,39 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
             closeKeyboard(requireActivity())
         }
+    }
+
+    @SuppressLint("RestrictedApi")
+    private fun showPopupMenu(view: View) {
+
+        try {
+            val popup = PopupMenu(requireContext(), view)
+            popup.menuInflater.inflate(R.menu.home_menu, popup.menu)
+            popup.setOnMenuItemClickListener(this)
+
+            val menuHelper = MenuPopupHelper(requireContext(), popup.menu as MenuBuilder, view)
+            menuHelper.setForceShowIcon(true)
+            menuHelper.gravity = Gravity.END
+
+            menuHelper.show()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+
+    override fun onMenuItemClick(item: MenuItem?): Boolean {
+
+        when (item?.itemId) {
+
+            R.id.menu_setting -> {
+
+                //todo : open Setting Fragment
+                showToast(requireContext(), "Settings btn clicked...")
+            }
+        }
+
+        return false
     }
 
     private fun showNoPassTV() {
@@ -434,5 +461,12 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         binding.searchView.visibility = View.VISIBLE
 
     }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        _binding = null
+    }
+
 
 }
