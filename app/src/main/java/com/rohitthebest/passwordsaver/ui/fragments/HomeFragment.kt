@@ -25,8 +25,11 @@ import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
 import com.rohitthebest.passwordsaver.other.Constants
+import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
+import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Functions.Companion.closeKeyboard
+import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.services.UploadSavedPasswordService
@@ -36,6 +39,7 @@ import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import java.util.*
+import kotlin.random.Random
 
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
@@ -186,7 +190,20 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onSyncBtnClickListener(password: Password?) {
 
-        showToast(requireContext(), "sync Button Clicked")
+        if (isInternetAvailable(requireContext())) {
+
+            showToast(requireContext(), " Syncing...")
+
+            password?.isSynced = SYNCED
+            password?.key =
+                "${System.currentTimeMillis().toString(36)}_${Random.nextInt(1000, 1000000)
+                    .toString(36)}_${password?.uid}"
+
+            uploadToFirebase(password)
+
+        } else {
+            showToast(requireContext(), NO_INTERNET_MESSAGE)
+        }
     }
 
     override fun onCopyBtnClickListener(password: Password?) {
@@ -274,23 +291,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
                                         passwordViewModel.insert(password)
 
-                                        val gson = Gson()
-                                        val passwordString = gson.toJson(password)
-
-                                        val foregroundServiceIntent =
-                                            Intent(
-                                                requireContext(),
-                                                UploadSavedPasswordService::class.java
-                                            )
-                                        foregroundServiceIntent.putExtra(
-                                            Constants.SAVED_PASSWORD_SERVICE_MESSAGE,
-                                            passwordString
-                                        )
-
-                                        ContextCompat.startForegroundService(
-                                            requireContext(),
-                                            foregroundServiceIntent
-                                        )
+                                        uploadToFirebase(password)
 
                                         showToast(requireContext(), "Password Restored")
                                     }
@@ -315,6 +316,28 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
         //todo : edit password
     }
+
+    private fun uploadToFirebase(password: Password?) {
+
+        val gson = Gson()
+        val passwordString = gson.toJson(password)
+
+        val foregroundServiceIntent =
+            Intent(
+                requireContext(),
+                UploadSavedPasswordService::class.java
+            )
+        foregroundServiceIntent.putExtra(
+            Constants.SAVED_PASSWORD_SERVICE_MESSAGE,
+            passwordString
+        )
+
+        ContextCompat.startForegroundService(
+            requireContext(),
+            foregroundServiceIntent
+        )
+    }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 
