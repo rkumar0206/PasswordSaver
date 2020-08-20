@@ -21,4 +21,6 @@
     <string name="don_t_use_lt_or_gt"><![CDATA[Don\'t use < or >]]></string>
     <string name="a_digit">A digit</string>
     <string name="savedPasswords">SavedPasswords</string>
+    <string name="t">true</string>
+    <string name="f">false</string>
 </resources>

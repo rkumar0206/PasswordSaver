@@ -1,5 +1,7 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
+import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
@@ -22,6 +25,8 @@ import kotlinx.coroutines.*
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     SavedPasswordRVAdapter.OnClickListener {
+
+    private val TARGET_FRAGMENT_MESSAGE = "message"
 
     //private val viewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
@@ -134,7 +139,34 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onSeePasswordBtnClickListener(password: Password?) {
 
+        val dialogFragment = MyDialogFragment().getInstance()
+        dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE)
+
+        parentFragmentManager.let { dialogFragment.show(it, "MyDialogFragment") }
+
         showToast(requireContext(), "Password visibility clicked")
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+
+        if (resultCode != Activity.RESULT_OK) {
+            return
+        }
+
+        if (requestCode == TARGET_FRAGMENT_REQUEST_CODE) {
+
+            //todo : do something with received text
+            //data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let { showToast(requireContext(), it) }
+        }
+    }
+
+    //making intent for dialog fragment
+    fun newIntent(message: String): Intent {
+
+        val intent = Intent()
+        intent.putExtra(TARGET_FRAGMENT_MESSAGE, message)
+
+        return intent
     }
 
     private fun initListeners() {
