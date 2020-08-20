@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.SearchView
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -25,6 +26,7 @@ import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
 import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
+import com.rohitthebest.passwordsaver.other.Functions.Companion.closeKeyboard
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.services.UploadSavedPasswordService
@@ -33,6 +35,7 @@ import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
+import java.util.*
 
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
@@ -72,7 +75,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
         GlobalScope.launch {
 
-            delay(150)
+            delay(300)
             withContext(Dispatchers.Main) {
 
                 getAllSavedPassword()
@@ -101,10 +104,43 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
                 if (it.isNotEmpty()) {
 
+                    hideNoPassTV()
                     setUpRecyclerView(it)
+
+                    binding.searchView.setOnQueryTextListener(object :
+                        SearchView.OnQueryTextListener {
+                        override fun onQueryTextSubmit(p0: String?): Boolean {
+                            return false
+                        }
+
+                        override fun onQueryTextChange(newText: String?): Boolean {
+                            try {
+                                newText?.let { newTxt ->
+
+                                    if (newTxt.trim().isEmpty()) {
+
+                                        setUpRecyclerView(it)
+                                    } else {
+
+                                        val filteredList = it.filter { passwrd ->
+
+                                            passwrd.accountName?.toLowerCase(Locale.ROOT)!!
+                                                .contains(newTxt.toLowerCase(Locale.ROOT))
+                                        }
+
+                                        setUpRecyclerView(filteredList)
+                                    }
+                                }
+                            } catch (e: java.lang.Exception) {
+                                e.printStackTrace()
+                            }
+                            return false
+                        }
+                    })
 
                 } else {
 
+                    showNoPassTV()
                     try {
                         setUpRecyclerView(it)
                     } catch (e: java.lang.Exception) {
@@ -186,6 +222,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
             .setPositiveButton("Delete") { dialogInterface, _ ->
 
                 deletePassword(password)
+                dialogInterface.dismiss()
             }
             .setNegativeButton("Cancel") { dialogInterface, _ ->
 
@@ -327,6 +364,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     private fun initListeners() {
 
         binding.addPasswordFAB.setOnClickListener(this)
+        binding.homeFragCoordinatorLayout.setOnClickListener(this)
         binding.menuBtn.setOnClickListener(this)
     }
 
@@ -352,6 +390,26 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
                 //todo : Show popup menu
             }
         }
+
+        CoroutineScope(Dispatchers.IO).launch {
+
+            closeKeyboard(requireActivity())
+        }
+    }
+
+    private fun showNoPassTV() {
+
+        binding.noPassAddedTV.visibility = View.VISIBLE
+        binding.savedPasswordRV.visibility = View.GONE
+        binding.searchView.visibility = View.GONE
+    }
+
+    private fun hideNoPassTV() {
+
+        binding.noPassAddedTV.visibility = View.GONE
+        binding.savedPasswordRV.visibility = View.VISIBLE
+        binding.searchView.visibility = View.VISIBLE
+
     }
 
 }
