@@ -50,7 +50,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
         GlobalScope.launch {
 
-            delay(250)
+            delay(150)
             withContext(Dispatchers.Main) {
 
                 getAllSavedPassword()

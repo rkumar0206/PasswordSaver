@@ -41,43 +41,50 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
                     }
                 }
 
-                accountNameTV.setOnClickListener(this@SavedPasswordViewHolder)
             }
         }
 
+        init {
+
+            itemBinding.cardView.setOnClickListener(this)
+            itemBinding.copyBtn.setOnClickListener(this)
+            itemBinding.syncBtn.setOnClickListener(this)
+            itemBinding.visibilityBtn.setOnClickListener(this)
+        }
+
         override fun onClick(v: View?) {
-            val pos = absoluteAdapterPosition
+
             when (v?.id) {
 
                 itemBinding.cardView.id -> {
 
-                    if (pos != RecyclerView.NO_POSITION && mListener != null) {
+                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
 
-                        mListener?.onItemClickListener(getItem(pos))
+                        mListener?.onItemClickListener(getItem(absoluteAdapterPosition))
                     }
                 }
 
                 itemBinding.visibilityBtn.id -> {
 
-                    if (pos != RecyclerView.NO_POSITION && mListener != null) {
+                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
 
-                        mListener?.onSeePasswordBtnClickListener(getItem(pos))
+                        mListener?.onSeePasswordBtnClickListener(getItem(absoluteAdapterPosition))
                     }
                 }
 
                 itemBinding.copyBtn.id -> {
 
-                    if (pos != RecyclerView.NO_POSITION && mListener != null) {
+                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
 
-                        mListener?.onCopyBtnClickListener(getItem(pos))
+                        mListener?.onCopyBtnClickListener(getItem(absoluteAdapterPosition))
                     }
                 }
 
                 itemBinding.syncBtn.id -> {
 
-                    if (pos != RecyclerView.NO_POSITION && mListener != null) {
+                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
 
-                        mListener?.onSyncBtnClickListener(getItem(pos))
+                        mListener?.onSyncBtnClickListener(getItem(absoluteAdapterPosition))
                     }
                 }
             }
