@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -12,13 +13,15 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
+import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 
 @AndroidEntryPoint
-class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener {
+class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
+    SavedPasswordRVAdapter.OnClickListener {
 
     //private val viewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
@@ -99,11 +102,39 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener {
                     adapter = mAdapter
 
                 }
+                mAdapter.setOnClickListener(this)
             }
 
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    override fun onItemClickListener(password: Password?) {
+
+        showToast(
+            requireContext(), "accountName : ${password?.accountName}\n" +
+                    "password : ${password?.password}\n" +
+                    "isSynced : ${password?.isSynced}\n" +
+                    "uid : ${password?.uid}\\n" +
+                    "timeStamp : ${password?.timeStamp}"
+            , Toast.LENGTH_LONG
+        )
+    }
+
+    override fun onSyncBtnClickListener(password: Password?) {
+
+        showToast(requireContext(), "sync Button Clicked")
+    }
+
+    override fun onCopyBtnClickListener(password: Password?) {
+
+        showToast(requireContext(), "Copy Btn Clicked")
+    }
+
+    override fun onSeePasswordBtnClickListener(password: Password?) {
+
+        showToast(requireContext(), "Password visibility clicked")
     }
 
     private fun initListeners() {
@@ -135,6 +166,5 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener {
             }
         }
     }
-
 
 }
