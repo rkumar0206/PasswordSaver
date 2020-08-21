@@ -365,9 +365,9 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     private fun openDialog(requestCode: Int) {
 
-        val dialogFragment = MyDialogFragment().getInstance()
+        val dialogFragment = CheckForPasswordDialog().getInstance()
         dialogFragment.setTargetFragment(this, requestCode)
-        parentFragmentManager.let { dialogFragment.show(it, "MyDialogFragment") }
+        parentFragmentManager.let { dialogFragment.show(it, "CheckForPasswordDialog") }
 
     }
 

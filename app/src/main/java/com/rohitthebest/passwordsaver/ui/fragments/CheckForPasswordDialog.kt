@@ -21,7 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class MyDialogFragment : DialogFragment() {
+class CheckForPasswordDialog : DialogFragment() {
 
     private val viewModel: AppSettingViewModel by viewModels()
 
@@ -105,8 +105,8 @@ class MyDialogFragment : DialogFragment() {
         }
     }
 
-    fun getInstance(): MyDialogFragment {
+    fun getInstance(): CheckForPasswordDialog {
 
-        return MyDialogFragment()
+        return CheckForPasswordDialog()
     }
 }
