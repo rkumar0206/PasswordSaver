@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -89,8 +90,10 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 receivedPassword = convertFromJsonToPassword(message)
 
+                Log.i("AddPasswordFrag", "${receivedPassword?.password}")
+                Log.i("AddPasswordFrag", "${receivedPassword?.accountName}")
+
                 isForEditing = true
-                updateUI(receivedPassword)
             }
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
@@ -125,6 +128,11 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                 if (it.isNotEmpty()) {
 
                     appSetting = it[0]
+
+                    if (isForEditing) {
+
+                        updateUI(receivedPassword)
+                    }
                 }
             })
         } catch (e: Exception) {
@@ -257,6 +265,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
             passwordViewModel.insert(receivedPassword)
 
+            requireActivity().onBackPressed()
         } else {
 
             if (isInternetAvailable(requireContext())) {
@@ -272,6 +281,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 ContextCompat.startForegroundService(requireContext(), foregroundServiceIntent)
 
+                requireActivity().onBackPressed()
             } else {
 
                 showToast(
