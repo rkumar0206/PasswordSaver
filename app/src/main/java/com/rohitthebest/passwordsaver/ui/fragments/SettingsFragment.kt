@@ -1,5 +1,6 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
@@ -27,16 +28,19 @@ import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
 import com.rohitthebest.passwordsaver.other.Constants.ONLINE
+import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_MESSAGE
+import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Functions
+import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
-private const val TAG = "SettingsFragment"
 
 @AndroidEntryPoint
 class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedChangeListener {
 
+    private val TAG = "SettingsFragment"
     private val appSettingViewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
 
@@ -164,10 +168,19 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
         if (v?.id == binding.changePasswordIB.id || v?.id == binding.changePasswordTV.id) {
 
-            //todo : open change password dialog
+            openDialog()
         }
 
     }
+
+    private fun openDialog() {
+
+        val dialogFragment = ChangeAppPasswordDialog().getInstance()
+        dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE)
+
+        parentFragmentManager.let { dialogFragment.show(it, "ChangeAppPasswordDialog") }
+    }
+
 
     private fun updateChanges() {
 
@@ -243,7 +256,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                         disableSaveBtn()
                         signIn()
                     } else {
-                        Functions.showToast(requireContext(), Constants.NO_INTERNET_MESSAGE)
+                        showToast(requireContext(), Constants.NO_INTERNET_MESSAGE)
                     }
                     dialogInterface.dismiss()
                 }.create()
@@ -293,9 +306,34 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                 // Google Sign In failed, update UI appropriately
                 Log.w(TAG, "Google sign in failed", e)
                 // [START_EXCLUDE]
-                Functions.showToast(requireContext(), "SignIn Un-successful")
+                showToast(requireContext(), "SignIn Un-successful")
             }
         }
+
+        if (resultCode != Activity.RESULT_OK) {
+
+            return
+        }
+
+        if (requestCode == TARGET_FRAGMENT_REQUEST_CODE) {
+
+            data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
+
+                if (it.isNotEmpty()) {
+
+                    showToast(requireContext(), it)
+                }
+            }
+        }
+
+    }
+
+    fun newIntent(message: String): Intent {
+
+        val intent = Intent()
+        intent.putExtra(TARGET_FRAGMENT_MESSAGE, message)
+
+        return intent
     }
 
     private fun firebaseAuthWithGoogle(idToken: String) {
@@ -310,14 +348,14 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                     // Sign in success, update UI with the signed-in user's information
                     Log.d(TAG, "signInWithCredential:success")
 
-                    Functions.showToast(requireContext(), "SignIn successful")
-                    Functions.showToast(requireContext(), "signInWithCredential:success")
+                    showToast(requireContext(), "SignIn successful")
+                    showToast(requireContext(), "signInWithCredential:success")
 
                     enableSaveBtn()
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
-                    Functions.showToast(requireContext(), "Authentication Failed.")
+                    showToast(requireContext(), "Authentication Failed.")
 
                     binding.modeChangeRG.check(binding.offlineModeRB.id)
                     enableSaveBtn()

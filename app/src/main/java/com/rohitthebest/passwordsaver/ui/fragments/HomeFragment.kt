@@ -29,6 +29,7 @@ import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
 import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.SYNCED
+import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE2
 import com.rohitthebest.passwordsaver.other.Functions.Companion.closeKeyboard
@@ -49,8 +50,6 @@ import kotlin.random.Random
 class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     SavedPasswordRVAdapter.OnClickListener, android.widget.PopupMenu.OnMenuItemClickListener,
     PopupMenu.OnMenuItemClickListener {
-
-    private val TARGET_FRAGMENT_MESSAGE = "message1"
 
     private val viewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()

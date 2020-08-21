@@ -18,4 +18,5 @@ object Constants {
     const val TARGET_FRAGMENT_REQUEST_CODE = 12
     const val TARGET_FRAGMENT_REQUEST_CODE2 = 17
     const val UPDATE_PASSWORD_SERVICE_MESSAGE = "com_rohitTheBes_UPDATE_PASSWORD_SERVICE_MESSAGE"
+    const val TARGET_FRAGMENT_MESSAGE = "message"
 }
