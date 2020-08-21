@@ -35,6 +35,7 @@ import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.*
 
 
 @AndroidEntryPoint
@@ -52,6 +53,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
     private lateinit var mAuth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
+
+    private var radioButtonChangeListener = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -140,6 +143,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
             binding.visibilityCB.isChecked = it.enterPasswordForVisibility == getString(R.string.t)
         }
+
+        radioButtonChangeListener = true
     }
 
     private fun initListeners() {
@@ -149,6 +154,69 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
         binding.changePasswordIB.setOnClickListener(this)
         binding.changePasswordTV.setOnClickListener(this)
         binding.modeChangeRG.setOnCheckedChangeListener(this)
+    }
+
+
+    override fun onCheckedChanged(radioGroup: RadioGroup?, checkedId: Int) {
+
+        if (checkedId == binding.offlineModeRB.id) {
+
+            if (radioButtonChangeListener) {
+                val message =
+                    "${getString(R.string.offline_text)}\n2 .If you choose offline mode all " +
+                            "the passwords saved on cloud will" +
+                            " be permanently deleted and cannot be retrieved again."
+
+                AlertDialog.Builder(requireContext())
+                    .setMessage(message)
+                    .setPositiveButton("Ok") { dialogInterface, _ ->
+                        dialogInterface.dismiss()
+                    }
+                    .create()
+                    .show()
+
+            }
+        } else {
+
+            if (radioButtonChangeListener && appSetting?.uid == "") {
+                val message =
+                    "${getString(R.string.online_text)}\n\nIn Order to save your data to" +
+                            " cloud you need to signIn with your Google Account."
+
+                AlertDialog.Builder(requireContext())
+                    .setMessage(message)
+                    .setPositiveButton("SignIn") { dialogInterface, _ ->
+
+                        if (Functions.isInternetAvailable(requireContext())) {
+                            disableSaveBtn()
+                            signIn()
+                        } else {
+                            showToast(requireContext(), Constants.NO_INTERNET_MESSAGE)
+                        }
+                        dialogInterface.dismiss()
+                    }.setOnDismissListener {
+
+                        if (mAuth.currentUser == null) {
+                            radioButtonChangeListener = false
+                            binding.modeChangeRG.check(binding.offlineModeRB.id)
+                        }
+
+                        GlobalScope.launch {
+
+                            delay(200)
+
+                            withContext(Dispatchers.Main) {
+
+                                radioButtonChangeListener = true
+                            }
+                        }
+                    }
+                    .create()
+                    .show()
+            }
+
+        }
+
     }
 
 
@@ -186,7 +254,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
         appSetting?.let {
 
-
             it.enterPasswordForCopy = if (binding.copyCB.isChecked) {
 
                 getString(R.string.t)
@@ -206,7 +273,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
             it.mode =
                 if (binding.modeChangeRG.checkedRadioButtonId == binding.offlineModeRB.id) {
 
-                    //todo : delete all passwords from firestore databse
+                    //todo : delete all passwords from firestore database
                     OFFLINE
                 } else {
                     //todo : upload appSetting to database
@@ -223,45 +290,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                 }
 
             appSettingViewModel.insert(it)
-        }
-
-    }
-
-    override fun onCheckedChanged(radioGroup: RadioGroup?, checkedId: Int) {
-
-        if (checkedId == binding.offlineModeRB.id) {
-
-            val message =
-                "${getString(R.string.offline_text)}\n2 .If you choose offline mode all " +
-                        "the passwords saved on cloud will" +
-                        " be permanently deleted and cannot be retrieved again."
-
-            AlertDialog.Builder(requireContext())
-                .setMessage(message)
-                .setPositiveButton("Ok") { dialogInterface, _ ->
-                    dialogInterface.dismiss()
-                }.create()
-                .show()
-
-        } else {
-
-            val message = "${getString(R.string.online_text)}\n\nIn Order to save your data to" +
-                    " cloud you need to signIn with your Google Account."
-
-            AlertDialog.Builder(requireContext())
-                .setMessage(message)
-                .setPositiveButton("SignIn") { dialogInterface, _ ->
-
-                    if (Functions.isInternetAvailable(requireContext())) {
-                        disableSaveBtn()
-                        signIn()
-                    } else {
-                        showToast(requireContext(), Constants.NO_INTERNET_MESSAGE)
-                    }
-                    dialogInterface.dismiss()
-                }.create()
-                .show()
-
         }
 
     }
@@ -357,6 +385,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
                     showToast(requireContext(), "Authentication Failed.")
 
+                    radioButtonChangeListener = false
                     binding.modeChangeRG.check(binding.offlineModeRB.id)
                     enableSaveBtn()
                     hideProgressBar()
