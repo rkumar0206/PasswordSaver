@@ -349,6 +349,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
                 if (it.isNotEmpty()) {
 
+                    //todo : change the password
                     showToast(requireContext(), it)
                 }
             }
