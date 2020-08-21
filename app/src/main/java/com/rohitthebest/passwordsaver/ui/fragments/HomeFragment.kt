@@ -447,8 +447,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
             R.id.menu_setting -> {
 
-                //todo : open Setting Fragment
-                showToast(requireContext(), "Settings btn clicked...")
+                findNavController().navigate(R.id.action_homeFragment_to_settingsFragment)
             }
         }
 
