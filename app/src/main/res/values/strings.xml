@@ -23,4 +23,5 @@
     <string name="savedPasswords">SavedPasswords</string>
     <string name="t">true</string>
     <string name="f">false</string>
+    <string name="editPassword">Edit Password</string>
 </resources>

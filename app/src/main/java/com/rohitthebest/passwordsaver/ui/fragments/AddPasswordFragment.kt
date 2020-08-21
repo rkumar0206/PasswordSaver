@@ -104,6 +104,8 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
         receivedPassword?.let {
 
+            binding.titleTV.text = getString(R.string.editPassword)
+
             binding.accountNameET.editText?.setText(it.accountName)
 
             try {
