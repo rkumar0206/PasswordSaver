@@ -7,7 +7,9 @@ import androidx.room.PrimaryKey
 data class AppSetting(
     var mode: String? = "",
     var appPassword: String?,
-    var uid: String?
+    var uid: String?,
+    var enterPasswordForCopy: String? = "true",
+    var enterPasswordForVisibility: String? = "true"
 ) {
 
     @PrimaryKey(autoGenerate = false)
@@ -16,6 +18,8 @@ data class AppSetting(
     constructor() : this(
         "",
         "",
-        ""
+        "",
+        "true",
+        "true"
     )
 }

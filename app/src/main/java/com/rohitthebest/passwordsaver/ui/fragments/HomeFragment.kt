@@ -30,6 +30,7 @@ import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
+import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE2
 import com.rohitthebest.passwordsaver.other.Functions.Companion.closeKeyboard
 import com.rohitthebest.passwordsaver.other.Functions.Companion.convertToJson
 import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
@@ -49,7 +50,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     SavedPasswordRVAdapter.OnClickListener, android.widget.PopupMenu.OnMenuItemClickListener,
     PopupMenu.OnMenuItemClickListener {
 
-    private val TARGET_FRAGMENT_MESSAGE = "message"
+    private val TARGET_FRAGMENT_MESSAGE = "message1"
 
     private val viewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
@@ -61,6 +62,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     private lateinit var mAdapter: SavedPasswordRVAdapter
     private var pass: String? = ""
+    private var account: String? = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -217,17 +219,17 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onCopyBtnClickListener(password: Password?) {
 
-        val clipboardManager: ClipboardManager =
-            requireActivity().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        pass = password?.password
+        account = password?.accountName
 
-        val clipData =
-            ClipData.newPlainText(
-                "password",
-                EncryptData().decryptAES(password?.password, appSetting?.appPassword)
-            )
+        if (appSetting?.enterPasswordForCopy == getString(R.string.t)) {
 
-        clipboardManager.setPrimaryClip(clipData)
-        showToast(requireContext(), "Copied Password")
+            openDialog(TARGET_FRAGMENT_REQUEST_CODE2)
+        } else {
+
+            copyToClipboard(EncryptData().decryptAES(password?.password, appSetting?.appPassword))
+        }
+
     }
 
     override fun onDeleteClick(password: Password?) {
@@ -343,11 +345,30 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     override fun onSeePasswordBtnClickListener(password: Password?) {
 
         pass = password?.password
+        account = password?.accountName
+
+
+
+        if (appSetting?.enterPasswordForVisibility == getString(R.string.t)) {
+
+            openDialog(TARGET_FRAGMENT_REQUEST_CODE)
+        } else {
+
+            showPasswordInAlertMessage(
+                account,
+                EncryptData().decryptAES(pass, appSetting?.appPassword)
+            )
+        }
+
+
+    }
+
+    private fun openDialog(requestCode: Int) {
 
         val dialogFragment = MyDialogFragment().getInstance()
-        dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE)
-
+        dialogFragment.setTargetFragment(this, requestCode)
         parentFragmentManager.let { dialogFragment.show(it, "MyDialogFragment") }
+
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -362,28 +383,49 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
                 if (it != getString(R.string.f)) {
 
-                    var decryptedPass: String? = ""
                     try {
 
-                        decryptedPass = EncryptData().decryptAES(pass, it)
+                        showPasswordInAlertMessage(account, EncryptData().decryptAES(pass, it))
 
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
-
-                    AlertDialog.Builder(requireContext())
-                        .setTitle("Your Password")
-                        .setMessage(decryptedPass)
-                        .setPositiveButton("Ok") { dialogInterface, _ ->
-                            dialogInterface.dismiss()
-                        }.create()
-                        .show()
 
                 } else {
                     showToast(requireContext(), "Password does not match!!!")
                 }
             }
         }
+        if (requestCode == TARGET_FRAGMENT_REQUEST_CODE2) {
+
+            data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
+
+                if (it != getString(R.string.f)) {
+
+                    try {
+                        copyToClipboard(EncryptData().decryptAES(pass, it))
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun copyToClipboard(text: String?) {
+
+        val clipboardManager: ClipboardManager =
+            requireActivity().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+        val clipData =
+            ClipData.newPlainText(
+                "password",
+                text
+            )
+
+        clipboardManager.setPrimaryClip(clipData)
+        showToast(requireContext(), "Copied Password")
     }
 
     //making intent for dialog fragment
@@ -393,6 +435,18 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         intent.putExtra(TARGET_FRAGMENT_MESSAGE, message)
 
         return intent
+    }
+
+    private fun showPasswordInAlertMessage(accountName: String?, decryptedPass: String?) {
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Your Password for $accountName")
+            .setMessage(decryptedPass)
+            .setPositiveButton("Ok") { dialogInterface, _ ->
+                dialogInterface.dismiss()
+            }.create()
+            .show()
+
     }
 
     private fun initListeners() {

@@ -24,4 +24,11 @@
     <string name="t">true</string>
     <string name="f">false</string>
     <string name="editPassword">Edit Password</string>
+    <string name="settings">Settings</string>
+    <string name="change_mode">Change Mode</string>
+    <string name="change_password">Change Password</string>
+    <string name="editbtn">editBtn</string>
+    <string name="general_settings">General Settings</string>
+    <string name="enter_password_every_time_you_copy_password">Enter password every time you copy password</string>
+    <string name="enter_password_every_time_you_want_to_see_your_password">Enter password every time you want to see your password</string>
 </resources>
