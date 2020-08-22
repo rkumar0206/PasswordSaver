@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioGroup
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -446,7 +447,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                 if (it.isNotEmpty()) {
                     //No need to encrypt the incoming message as it is already encrypted
                     changePassword(newPassword = it)
-                    showToast(requireContext(), it)
+                    //showToast(requireContext(), it)
                 }
             }
         }
@@ -457,10 +458,39 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
         appSetting?.let {
 
-            it.appPassword = newPassword
+            if (it.mode == ONLINE) {
 
-            appSettingViewModel.insert(it)
-            showToast(requireContext(), "Password Changed")
+                it.appPassword = newPassword
+
+                if (isInternetAvailable(requireContext())) {
+
+                    val foreGroundServiceIntent =
+                        Intent(requireContext(), UploadAppSettingsService::class.java)
+                    foreGroundServiceIntent.putExtra(
+                        APP_SETTING_SERVICE_MESSAGE,
+                        convertAppSettingToJson(it)
+                    )
+
+                    ContextCompat.startForegroundService(
+                        requireContext(),
+                        foreGroundServiceIntent
+                    )
+
+                    appSettingViewModel.insert(it)
+                    showToast(requireContext(), "Password Changed")
+                } else {
+
+                    showToast(requireContext(), NO_INTERNET_MESSAGE)
+                    showToast(requireContext(), "Cannot change the password!!!", Toast.LENGTH_LONG)
+                }
+
+            } else {
+
+                it.appPassword = newPassword
+                appSettingViewModel.insert(it)
+                showToast(requireContext(), "Password Changed")
+            }
+
         }
     }
 

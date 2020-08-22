@@ -34,7 +34,7 @@ class UploadAppSettingsService : Service() {
             this,
             NOTIFICATION_CHANNEL_ID
         ).setSmallIcon(R.drawable.ic_baseline_visibility_off_24)
-            .setContentTitle("Saving Password...")
+            .setContentTitle("Saving...")
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
