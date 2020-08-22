@@ -502,6 +502,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
+                } else {
+                    showToast(requireContext(), "Password does not match!!!")
                 }
             }
         }

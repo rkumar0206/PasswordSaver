@@ -1,5 +1,6 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
@@ -124,6 +125,8 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
         binding.setupPasswordCL.setOnClickListener(this)
         binding.enterPasswordCL.setOnClickListener(this)
         binding.confirmBtn.setOnClickListener(this)
+        binding.forgotPsswordTV.setOnClickListener(this)
+        binding.changeModeTV.setOnClickListener(this)
     }
 
 
@@ -148,6 +151,18 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
 
                     binding.enterPasswordET.error = EDITTEXT_EMPTY_MESSAGE
                 }
+            }
+
+            binding.forgotPsswordTV.id -> {
+
+                AlertDialog.Builder(requireContext())
+                    .setTitle("Forgot Password?")
+                    .setMessage("Try changing mode to online ")
+            }
+
+            binding.changeModeTV.id -> {
+
+
             }
         }
 
