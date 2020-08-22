@@ -31,4 +31,6 @@
     <string name="general_settings">General Settings</string>
     <string name="enter_password_every_time_you_copy_password">Enter password every time you copy password</string>
     <string name="enter_password_every_time_you_want_to_see_your_password">Enter password every time you want to see your password</string>
+    <string name="no_passwords_added">No Passwords added!!!</string>
+    <string name="saved_passwords">Saved Passwords</string>
 </resources>
