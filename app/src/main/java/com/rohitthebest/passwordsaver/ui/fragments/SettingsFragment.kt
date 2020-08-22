@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioGroup
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -25,13 +26,16 @@ import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentSettingsBinding
 import com.rohitthebest.passwordsaver.other.Constants
+import com.rohitthebest.passwordsaver.other.Constants.APP_SETTING_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
 import com.rohitthebest.passwordsaver.other.Constants.ONLINE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Functions
+import com.rohitthebest.passwordsaver.other.Functions.Companion.convertAppSettingToJson
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
+import com.rohitthebest.passwordsaver.services.UploadAppSettingsService
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -106,7 +110,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
         try {
 
-            passwordViewModel.getAllPasswordsList().observe(viewLifecycleOwner, Observer { it ->
+            passwordViewModel.getAllPasswordsList().observe(viewLifecycleOwner, Observer {
 
                 if (it.isNotEmpty()) {
 
@@ -276,8 +280,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                     //todo : delete all passwords from firestore database
                     OFFLINE
                 } else {
-                    //todo : upload appSetting to database
-                    //todo : update the field isSynced in sqlite database
 
                     savedPasswordList?.forEach { password ->
 
@@ -286,10 +288,20 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                         passwordViewModel.insert(password)
                     }
 
+                    it.uid = mAuth.currentUser?.uid
+
                     ONLINE
                 }
-
             appSettingViewModel.insert(it)
+
+            val foreGroundServiceIntent =
+                Intent(requireContext(), UploadAppSettingsService::class.java)
+            foreGroundServiceIntent.putExtra(
+                APP_SETTING_SERVICE_MESSAGE,
+                convertAppSettingToJson(it)
+            )
+
+            ContextCompat.startForegroundService(requireContext(), foreGroundServiceIntent)
         }
 
     }
@@ -348,13 +360,24 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
             data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
 
                 if (it.isNotEmpty()) {
-
-                    //todo : change the password
+                    //No need to encrypt the incoming message as it is already encrypted
+                    changePassword(newPassword = it)
                     showToast(requireContext(), it)
                 }
             }
         }
 
+    }
+
+    private fun changePassword(newPassword: String) {
+
+        appSetting?.let {
+
+            it.appPassword = newPassword
+
+            appSettingViewModel.insert(it)
+            showToast(requireContext(), "Password Changed")
+        }
     }
 
     fun newIntent(message: String): Intent {
@@ -390,6 +413,15 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                     binding.modeChangeRG.check(binding.offlineModeRB.id)
                     enableSaveBtn()
                     hideProgressBar()
+
+                    GlobalScope.launch {
+                        delay(200)
+                        withContext(Dispatchers.Main) {
+
+                            radioButtonChangeListener = true
+                        }
+                    }
+
                 }
                 hideProgressBar()
             }

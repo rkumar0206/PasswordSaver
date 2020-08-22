@@ -26,7 +26,7 @@ import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.UPDATE_PASSWORD_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.Functions
 import com.rohitthebest.passwordsaver.other.Functions.Companion.convertFromJsonToPassword
-import com.rohitthebest.passwordsaver.other.Functions.Companion.convertToJson
+import com.rohitthebest.passwordsaver.other.Functions.Companion.convertPasswordToJson
 import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
@@ -278,7 +278,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                     Intent(requireContext(), UpdatePasswordService::class.java)
                 foregroundServiceIntent.putExtra(
                     UPDATE_PASSWORD_SERVICE_MESSAGE,
-                    convertToJson(receivedPassword)
+                    convertPasswordToJson(receivedPassword)
                 )
 
                 ContextCompat.startForegroundService(requireContext(), foregroundServiceIntent)

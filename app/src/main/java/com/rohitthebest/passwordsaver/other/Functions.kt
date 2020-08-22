@@ -7,6 +7,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.util.CheckNetworkConnection
 import kotlinx.coroutines.Dispatchers
@@ -17,6 +18,7 @@ class Functions {
     companion object {
 
         private const val TAG = "Functions"
+        val gson = Gson()
 
         fun showToast(context: Context, message: String, duration: Int = Toast.LENGTH_SHORT) {
             try {
@@ -53,19 +55,31 @@ class Functions {
             }
         }
 
-        fun convertToJson(password: Password?): String? {
+        fun convertPasswordToJson(password: Password?): String? {
 
-            val gson = Gson()
             return gson.toJson(password)
         }
 
         fun convertFromJsonToPassword(jsonString: String?): Password? {
 
-            val gson = Gson()
+
             val type = object : TypeToken<Password?>() {}.type
 
             return gson.fromJson(jsonString, type)
         }
+
+        fun convertAppSettingToJson(appSetting: AppSetting?): String? {
+
+            return gson.toJson(appSetting)
+        }
+
+        fun convertFromJsonToAppSetting(jsonString: String?): AppSetting? {
+
+            val type = object : TypeToken<AppSetting?>() {}.type
+
+            return gson.fromJson(jsonString, type)
+        }
+
 
     }
 }
