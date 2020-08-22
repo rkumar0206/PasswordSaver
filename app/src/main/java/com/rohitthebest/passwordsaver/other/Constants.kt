@@ -19,4 +19,9 @@ object Constants {
     const val TARGET_FRAGMENT_REQUEST_CODE2 = 17
     const val UPDATE_PASSWORD_SERVICE_MESSAGE = "com_rohitTheBes_UPDATE_PASSWORD_SERVICE_MESSAGE"
     const val TARGET_FRAGMENT_MESSAGE = "message"
+    const val DELETE_APPSETTING_SERVICE_MESSAGE =
+        "com.rohitthebest.passwordsaver.other_DELETE_APPSETTING"
+    const val DELETE_PASSWORD_SERVICE_MESSAGE =
+        "com.rohitthebest.passwordsaver.other_DELETE_PASSWORD"
+
 }

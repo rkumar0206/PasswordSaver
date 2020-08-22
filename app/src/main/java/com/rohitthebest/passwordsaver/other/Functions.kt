@@ -60,10 +60,23 @@ class Functions {
             return gson.toJson(password)
         }
 
+
         fun convertFromJsonToPassword(jsonString: String?): Password? {
 
 
             val type = object : TypeToken<Password?>() {}.type
+
+            return gson.fromJson(jsonString, type)
+        }
+
+        fun convertPasswordListToJson(passwordList: ArrayList<Password>?): String? {
+
+            return gson.toJson(passwordList)
+        }
+
+        fun convertFromPasswordListJsonToPasswordList(jsonString: String?): ArrayList<Password>? {
+
+            val type = object : TypeToken<ArrayList<Password?>>() {}.type
 
             return gson.fromJson(jsonString, type)
         }

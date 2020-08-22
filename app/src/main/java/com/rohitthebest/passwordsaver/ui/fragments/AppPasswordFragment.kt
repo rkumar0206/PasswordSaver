@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,6 +13,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
@@ -27,12 +33,12 @@ import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.services.UploadAppSettingsService
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 @AndroidEntryPoint
 class AppPasswordFragment : Fragment(), View.OnClickListener {
+
+    private val TAG = "AppPasswordFragment"
 
     private val viewModel: AppSettingViewModel by viewModels()
 
@@ -40,6 +46,8 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
     private val binding get() = _binding!!
 
     private var appSetting: AppSetting? = null
+
+    private lateinit var mAuth: FirebaseAuth
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,6 +62,8 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        mAuth = Firebase.auth
 
         getAppSettingData()
         initListeners()
@@ -77,12 +87,28 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
                         showSetupPasswordCL()
                         it[0]
                     }
+
+                    if (it[0].mode == OFFLINE && mAuth.currentUser != null) {
+
+                        try {
+
+                            GlobalScope.launch {
+
+                                delay(7000)
+
+                                withContext(Dispatchers.Main) {
+
+                                    signOut()
+                                }
+                            }
+                        } catch (e: java.lang.Exception) {
+                            e.printStackTrace()
+                        }
+                    }
+
                 } else {
 
-
                     findNavController().navigate(R.id.action_appPasswordFragment_to_introductionFragment)
-
-
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -279,6 +305,37 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
         })
 
     }
+
+    private fun signOut() {
+
+        try {
+
+            mAuth.signOut()
+
+            //[Google Sign Out]
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+            val googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
+
+            googleSignInClient?.signOut()?.addOnCompleteListener {
+                Log.i(TAG, "Google signOut Successful")
+
+                try {
+                    //showToast(requireContext(), "Google signOut Successful")
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            //showToast(requireContext(), "You are signed out")
+            Log.i(TAG, "You are signed out")
+
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
+
 
     private fun showSetupPasswordCL() {
 

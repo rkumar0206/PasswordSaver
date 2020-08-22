@@ -51,6 +51,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     SavedPasswordRVAdapter.OnClickListener, android.widget.PopupMenu.OnMenuItemClickListener,
     PopupMenu.OnMenuItemClickListener {
 
+    //private val TAG = "HomeFragment"
+
     private val viewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
 
@@ -62,6 +64,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     private lateinit var mAdapter: SavedPasswordRVAdapter
     private var pass: String? = ""
     private var account: String? = ""
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -76,7 +79,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
 
         mAdapter = SavedPasswordRVAdapter()
 
@@ -101,6 +103,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
             if (it.isNotEmpty()) {
 
                 appSetting = it[0]
+
             }
         })
     }

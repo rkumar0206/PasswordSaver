@@ -27,20 +27,24 @@ import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentSettingsBinding
 import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.APP_SETTING_SERVICE_MESSAGE
+import com.rohitthebest.passwordsaver.other.Constants.DELETE_APPSETTING_SERVICE_MESSAGE
+import com.rohitthebest.passwordsaver.other.Constants.DELETE_PASSWORD_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
+import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
 import com.rohitthebest.passwordsaver.other.Constants.ONLINE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
-import com.rohitthebest.passwordsaver.other.Functions
 import com.rohitthebest.passwordsaver.other.Functions.Companion.convertAppSettingToJson
+import com.rohitthebest.passwordsaver.other.Functions.Companion.convertPasswordListToJson
+import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
+import com.rohitthebest.passwordsaver.services.DeleteAppSettingAndPasswordService
 import com.rohitthebest.passwordsaver.services.UploadAppSettingsService
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-
 
 @AndroidEntryPoint
 class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedChangeListener {
@@ -170,7 +174,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
             if (radioButtonChangeListener) {
                 val message =
-                    "${getString(R.string.offline_text)}\n2 .If you choose offline mode all " +
+                    "${getString(R.string.offline_text)}\n\n2 .If you choose offline mode all " +
                             "the passwords saved on cloud will" +
                             " be permanently deleted and cannot be retrieved again."
 
@@ -194,11 +198,11 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                     .setMessage(message)
                     .setPositiveButton("SignIn") { dialogInterface, _ ->
 
-                        if (Functions.isInternetAvailable(requireContext())) {
+                        if (isInternetAvailable(requireContext())) {
                             disableSaveBtn()
                             signIn()
                         } else {
-                            showToast(requireContext(), Constants.NO_INTERNET_MESSAGE)
+                            showToast(requireContext(), NO_INTERNET_MESSAGE)
                         }
                         dialogInterface.dismiss()
                     }.setOnDismissListener {
@@ -221,7 +225,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                     .create()
                     .show()
             }
-
         }
 
     }
@@ -245,7 +248,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
             openDialog()
         }
-
     }
 
     private fun openDialog() {
@@ -276,45 +278,109 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
                 getString(R.string.f)
             }
+            if (binding.modeChangeRG.checkedRadioButtonId == binding.offlineModeRB.id) {
 
-            it.mode =
-                if (binding.modeChangeRG.checkedRadioButtonId == binding.offlineModeRB.id) {
+                if (isOnlineModeInitially) {
 
+                    if (isInternetAvailable(requireContext())) {
 
-                    if (isOnlineModeInitially) {
-
-                        //todo : delete all passwords from firestore database
-
+                        deleteDataFromFirestore(it)
+                    } else {
+                        showToast(requireContext(), NO_INTERNET_MESSAGE)
                     }
-                    OFFLINE
                 } else {
 
-                    if (!isOnlineModeInitially) {
-                        if (savedPasswordList?.isNotEmpty()!!) {
-                            savedPasswordList?.forEach { password ->
-
-                                password.isSynced = NOT_SYNCED
-                                password.uid = mAuth.currentUser?.uid
-                                passwordViewModel.insert(password)
-                            }
-                        }
-                    }
-                    it.uid = mAuth.currentUser?.uid
-
-                    ONLINE
+                    appSettingViewModel.insert(it)
+                    requireActivity().onBackPressed()
                 }
-            appSettingViewModel.insert(it)
 
-            val foreGroundServiceIntent =
-                Intent(requireContext(), UploadAppSettingsService::class.java)
-            foreGroundServiceIntent.putExtra(
-                APP_SETTING_SERVICE_MESSAGE,
-                convertAppSettingToJson(it)
-            )
+            } else {
+                if (isInternetAvailable(requireContext())) {
 
-            ContextCompat.startForegroundService(requireContext(), foreGroundServiceIntent)
+                    uploadAppSettingToFirestore(it)
+                } else {
+
+                    showToast(requireContext(), NO_INTERNET_MESSAGE)
+                }
+            }
         }
 
+    }
+
+    private fun deleteDataFromFirestore(it: AppSetting) {
+
+        if (savedPasswordList?.isNotEmpty()!!) {
+            savedPasswordList?.forEach { password ->
+
+                password.uid = ""
+                passwordViewModel.insert(password)
+            }
+        }
+
+        val appSettingMessage = it.uid
+
+        val passwordListMessage = if (savedPasswordList?.isNotEmpty()!!) {
+
+            convertPasswordListToJson(savedPasswordList)
+        } else {
+            ""
+        }
+
+        Log.d(TAG, "$appSettingMessage")
+        Log.d(TAG, "$passwordListMessage")
+
+        val foreGroundServiceIntent =
+            Intent(requireContext(), DeleteAppSettingAndPasswordService::class.java)
+        foreGroundServiceIntent.putExtra(
+            DELETE_APPSETTING_SERVICE_MESSAGE,
+            appSettingMessage
+        )
+        foreGroundServiceIntent.putExtra(
+            DELETE_PASSWORD_SERVICE_MESSAGE,
+            passwordListMessage
+        )
+
+        ContextCompat.startForegroundService(
+            requireContext(),
+            foreGroundServiceIntent
+        )
+
+
+        it.uid = ""
+        it.mode = OFFLINE
+        appSettingViewModel.insert(it)
+
+        requireActivity().onBackPressed()
+    }
+
+    private fun uploadAppSettingToFirestore(it: AppSetting) {
+
+        if (savedPasswordList?.isNotEmpty()!!) {
+            savedPasswordList?.forEach { password ->
+
+                password.isSynced = NOT_SYNCED
+                password.uid = mAuth.currentUser?.uid
+                passwordViewModel.insert(password)
+            }
+        }
+        it.uid = mAuth.currentUser?.uid
+        it.mode = ONLINE
+
+        appSettingViewModel.insert(it)
+
+        val foreGroundServiceIntent =
+            Intent(requireContext(), UploadAppSettingsService::class.java)
+        foreGroundServiceIntent.putExtra(
+            APP_SETTING_SERVICE_MESSAGE,
+            convertAppSettingToJson(it)
+        )
+
+        ContextCompat.startForegroundService(
+            requireContext(),
+            foreGroundServiceIntent
+        )
+
+        requireActivity().onBackPressed()
     }
 
     // [START signin]
@@ -415,6 +481,17 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                     showToast(requireContext(), "signInWithCredential:success")
 
                     enableSaveBtn()
+                    radioButtonChangeListener = false
+                    binding.modeChangeRG.check(binding.onlineModeRB.id)
+
+                    GlobalScope.launch {
+                        delay(200)
+                        withContext(Dispatchers.Main) {
+
+                            radioButtonChangeListener = true
+                        }
+                    }
+
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
@@ -437,6 +514,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                 hideProgressBar()
             }
     }
+
 
     private fun showProgressBar() {
 
