@@ -21,6 +21,11 @@ class PasswordViewModel @ViewModelInject constructor(
         repository.delete(password)
     }
 
+    fun deleteBySync(isSynced: String) = viewModelScope.launch {
+
+        repository.deleteBySync(isSynced)
+    }
+
     fun getAllPasswordsList() = repository.getAllPasswords()
 
     fun getPasswordByAccountName(accountName: String) =

@@ -23,5 +23,6 @@ object Constants {
         "com.rohitthebest.passwordsaver.other_DELETE_APPSETTING"
     const val DELETE_PASSWORD_SERVICE_MESSAGE =
         "com.rohitthebest.passwordsaver.other_DELETE_PASSWORD"
-
+    const val SHARED_PREFERENCE_NAME = "shared_prefs"
+    const val SHARED_PREFERENCE_KEY = "com.rohitthebest.passwordsaver.other_shared_prefs"
 }

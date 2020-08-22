@@ -12,6 +12,8 @@ class PasswordRepository @Inject constructor(
 
     suspend fun delete(password: Password) = dao.delete(password)
 
+    suspend fun deleteBySync(isSynced: String) = dao.deleteBySync(isSynced)
+
     fun getAllPasswords() = dao.getAllPasswordsList()
 
     fun getPasswordByAccountName(accountName: String) = dao.getPasswordByAccountName(accountName)

@@ -20,7 +20,10 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
 import com.google.gson.Gson
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
@@ -28,6 +31,9 @@ import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
 import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
+import com.rohitthebest.passwordsaver.other.Constants.ONLINE
+import com.rohitthebest.passwordsaver.other.Constants.SHARED_PREFERENCE_KEY
+import com.rohitthebest.passwordsaver.other.Constants.SHARED_PREFERENCE_NAME
 import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
@@ -65,6 +71,9 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     private var pass: String? = ""
     private var account: String? = ""
 
+    private lateinit var mAuth: FirebaseAuth
+
+    private var isPasswordAdded = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -81,6 +90,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         super.onViewCreated(view, savedInstanceState)
 
         mAdapter = SavedPasswordRVAdapter()
+
+        loadData()
+
+        mAuth = Firebase.auth
 
         getAppSetting()
 
@@ -104,8 +117,82 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
                 appSetting = it[0]
 
+                if (it[0].mode == ONLINE
+                    && mAuth.currentUser != null
+                    && isInternetAvailable(requireContext())
+                    && !isPasswordAdded
+                ) {
+                    syncData()
+                }
+
             }
         })
+    }
+
+    private fun syncData() {
+
+        try {
+            try {
+                passwordViewModel.deleteBySync(SYNCED)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            FirebaseFirestore.getInstance()
+                .collection(getString(R.string.savedPasswords))
+                .whereEqualTo("uid", appSetting?.uid)
+                .get()
+                .addOnSuccessListener {
+
+                    var flag = false
+                    for (snapshot in it) {
+
+                        val password = snapshot.toObject(Password::class.java)
+
+                        passwordViewModel.insert(password)
+
+                        isPasswordAdded = true
+                        saveData()
+                        flag = true
+                    }
+
+                    if (!flag) {
+
+                        showToast(
+                            requireContext(),
+                            "You haven't saved any passwords on cloud yet!!!"
+                        )
+                    }
+                }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun saveData() {
+
+        val sharedPreferences =
+            requireActivity().getSharedPreferences(SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE)
+
+        val editor = sharedPreferences.edit()
+
+        editor.putBoolean(SHARED_PREFERENCE_KEY, isPasswordAdded)
+
+        editor.apply()
+    }
+
+    private fun loadData() {
+
+        val sharedPreferences =
+            requireActivity().getSharedPreferences(SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE)
+
+        try {
+
+            isPasswordAdded = sharedPreferences.getBoolean(SHARED_PREFERENCE_KEY, false)
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun getAllSavedPassword() {

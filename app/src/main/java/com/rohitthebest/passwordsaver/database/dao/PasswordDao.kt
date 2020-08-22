@@ -18,4 +18,7 @@ interface PasswordDao {
 
     @Query("SELECT * FROM password_table WHERE accountName = :accountName")
     fun getPasswordByAccountName(accountName: String): LiveData<Password>
+
+    @Query("DELETE FROM password_table WHERE isSynced = :isSynced")
+    suspend fun deleteBySync(isSynced: String)
 }
