@@ -158,7 +158,7 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("Forgot Password?")
-                    .setMessage("Try changing mode to online(if chosen 'Try SignIn' or 'Online' mode) or offline(if chosen 'Offline' mode)")
+                    .setMessage("Change Mode and setup the password again.")
                     .setPositiveButton("Change Mode") { dialogInterface, _ ->
 
                         if (appSetting?.mode == ONLINE) {
