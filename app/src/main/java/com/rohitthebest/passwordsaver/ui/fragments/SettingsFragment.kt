@@ -60,6 +60,8 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
     private var radioButtonChangeListener = false
 
+    private var isOnlineModeInitially = false
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -137,9 +139,10 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
             if (it.mode == ONLINE) {
 
+                isOnlineModeInitially = true
                 binding.modeChangeRG.check(binding.onlineModeRB.id)
             } else {
-
+                isOnlineModeInitially = false
                 binding.modeChangeRG.check(binding.offlineModeRB.id)
             }
 
@@ -277,17 +280,25 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
             it.mode =
                 if (binding.modeChangeRG.checkedRadioButtonId == binding.offlineModeRB.id) {
 
-                    //todo : delete all passwords from firestore database
+
+                    if (isOnlineModeInitially) {
+
+                        //todo : delete all passwords from firestore database
+
+                    }
                     OFFLINE
                 } else {
 
-                    savedPasswordList?.forEach { password ->
+                    if (!isOnlineModeInitially) {
+                        if (savedPasswordList?.isNotEmpty()!!) {
+                            savedPasswordList?.forEach { password ->
 
-                        password.isSynced = NOT_SYNCED
-                        password.uid = mAuth.currentUser?.uid
-                        passwordViewModel.insert(password)
+                                password.isSynced = NOT_SYNCED
+                                password.uid = mAuth.currentUser?.uid
+                                passwordViewModel.insert(password)
+                            }
+                        }
                     }
-
                     it.uid = mAuth.currentUser?.uid
 
                     ONLINE
