@@ -26,6 +26,7 @@ import com.rohitthebest.passwordsaver.other.Constants.APP_SETTING_SERVICE_MESSAG
 import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
+import com.rohitthebest.passwordsaver.other.Constants.ONLINE
 import com.rohitthebest.passwordsaver.other.Functions.Companion.closeKeyboard
 import com.rohitthebest.passwordsaver.other.Functions.Companion.convertAppSettingToJson
 import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
@@ -157,12 +158,38 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("Forgot Password?")
-                    .setMessage("Try changing mode to online ")
+                    .setMessage("Try changing mode to online(if chosen 'Try SignIn' or 'Online' mode) or offline(if chosen 'Offline' mode)")
+                    .setPositiveButton("Change Mode") { dialogInterface, _ ->
+
+                        if (appSetting?.mode == ONLINE) {
+                            signOut()
+                            findNavController().navigate(R.id.action_appPasswordFragment_to_introductionFragment)
+                        } else {
+
+                            findNavController().navigate(R.id.action_appPasswordFragment_to_introductionFragment)
+                        }
+
+                        dialogInterface.dismiss()
+                    }
+                    .setNegativeButton("Cancel") { dialogInterface, _ ->
+
+                        dialogInterface.dismiss()
+                    }
+                    .setCancelable(false)
+                    .create()
+                    .show()
             }
 
             binding.changeModeTV.id -> {
 
+                if (appSetting?.mode == ONLINE) {
 
+                    signOut()
+                    findNavController().navigate(R.id.action_appPasswordFragment_to_introductionFragment)
+                } else {
+
+                    findNavController().navigate(R.id.action_appPasswordFragment_to_introductionFragment)
+                }
             }
         }
 
