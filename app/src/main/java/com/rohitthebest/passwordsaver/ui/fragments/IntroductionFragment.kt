@@ -159,6 +159,7 @@ class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, Vie
 
     // [START signin]
     private fun signIn() {
+        binding.nextBtn.isEnabled = false
         val signInIntent = googleSignInClient.signInIntent
         startActivityForResult(
             signInIntent,
@@ -260,6 +261,7 @@ class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, Vie
                         }
                     }
 
+                    binding.nextBtn.isEnabled = true
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
@@ -267,6 +269,7 @@ class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, Vie
                     hideProgressBar()
                 }
                 hideProgressBar()
+                binding.nextBtn.isEnabled = true
             }
     }
 
