@@ -279,7 +279,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onItemClickListener(password: Password?) {
 
-        //todo : handle click listener
+        val action = HomeFragmentDirections
+            .actionHomeFragmentToAddPasswordFragment(convertPasswordToJson(password))
+
+        findNavController().navigate(action)
     }
 
     override fun onSyncBtnClickListener(password: Password?) {
@@ -340,9 +343,9 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
         password?.let {
 
-            passwordViewModel.delete(password)
-
             if (password.key == "") {
+
+                passwordViewModel.delete(password)
 
                 try {
                     Snackbar.make(
@@ -363,6 +366,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
             } else {
 
                 if (isInternetAvailable(requireContext())) {
+
+                    passwordViewModel.delete(password)
 
                     password.key?.let { key ->
                         FirebaseFirestore.getInstance()

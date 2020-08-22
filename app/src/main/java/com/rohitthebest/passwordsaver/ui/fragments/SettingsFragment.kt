@@ -297,7 +297,22 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
             } else {
                 if (isInternetAvailable(requireContext())) {
 
-                    uploadAppSettingToFirestore(it)
+                    if (!isOnlineModeInitially) {
+
+                        if (savedPasswordList?.isNotEmpty()!!) {
+                            savedPasswordList?.forEach { password ->
+
+                                password.isSynced = NOT_SYNCED
+                                password.uid = mAuth.currentUser?.uid
+                                passwordViewModel.insert(password)
+                            }
+                        }
+
+                        uploadAppSettingToFirestore(it)
+                    } else {
+
+                        uploadAppSettingToFirestore(it)
+                    }
                 } else {
 
                     showToast(requireContext(), NO_INTERNET_MESSAGE)
@@ -355,14 +370,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
     private fun uploadAppSettingToFirestore(it: AppSetting) {
 
-        if (savedPasswordList?.isNotEmpty()!!) {
-            savedPasswordList?.forEach { password ->
-
-                password.isSynced = NOT_SYNCED
-                password.uid = mAuth.currentUser?.uid
-                passwordViewModel.insert(password)
-            }
-        }
         it.uid = mAuth.currentUser?.uid
         it.mode = ONLINE
 

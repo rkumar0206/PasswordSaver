@@ -8,7 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioGroup
-import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -260,6 +259,7 @@ class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, Vie
                             e.printStackTrace()
                         }
                     }
+
                 } else {
                     // If sign in fails, display a message to the user.
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
@@ -293,23 +293,5 @@ class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, Vie
 
         _binding = null
     }
-
-/*
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        val callback = object : OnBackPressedCallback(true) {
-
-            override fun handleOnBackPressed() {
-
-                requireActivity().finish()
-
-            }
-        }
-
-        requireActivity().onBackPressedDispatcher.addCallback(callback)
-    }
-*/
-
 
 }

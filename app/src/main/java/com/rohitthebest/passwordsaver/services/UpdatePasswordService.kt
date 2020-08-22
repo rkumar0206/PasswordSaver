@@ -30,7 +30,7 @@ class UpdatePasswordService : Service() {
             Constants.NOTIFICATION_CHANNEL_ID
         ).setSmallIcon(R.drawable.ic_baseline_visibility_off_24)
             .setContentTitle("Updating Encrypted Password to Cloud...")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
 
         startForeground(15, notification)

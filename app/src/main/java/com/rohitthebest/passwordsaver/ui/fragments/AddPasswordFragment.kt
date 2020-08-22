@@ -266,6 +266,8 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
             passwordViewModel.insert(receivedPassword)
 
+            showToast(requireContext(), "Password updated")
+
             requireActivity().onBackPressed()
         } else {
 
@@ -282,6 +284,8 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 ContextCompat.startForegroundService(requireContext(), foregroundServiceIntent)
 
+                showToast(requireContext(), "Password updated")
+
                 requireActivity().onBackPressed()
             } else {
 
@@ -291,9 +295,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                     Toast.LENGTH_LONG
                 )
             }
-
         }
-        showToast(requireContext(), "Password updated")
     }
 
     private fun encryptPassword(password: String): String? {
@@ -306,7 +308,6 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             e.printStackTrace()
             ""
         }
-
     }
 
     private fun validateForm(): Boolean {
