@@ -18,7 +18,6 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
-import com.google.gson.Gson
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.databinding.FragmentAppPasswordBinding
@@ -27,6 +26,7 @@ import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
 import com.rohitthebest.passwordsaver.other.Functions.Companion.closeKeyboard
+import com.rohitthebest.passwordsaver.other.Functions.Companion.convertAppSettingToJson
 import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
@@ -179,8 +179,8 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
 
                     if (isInternetAvailable(requireContext())) {
                         it.appPassword = encryptedPassword
-                        val gson = Gson()
-                        val appsSettingMessage = gson.toJson(it)
+
+                        val appsSettingMessage = convertAppSettingToJson(it)
 
                         val foreGroundServiceIntent =
                             Intent(requireContext(), UploadAppSettingsService::class.java)
@@ -238,7 +238,7 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
 
     private fun checkForPasswordMatch(enteredPassword: String) {
 
-        if (EncryptData().encryptWithSHA(enteredPassword) == appSetting?.appPassword ) {
+        if (EncryptData().encryptWithSHA(enteredPassword) == appSetting?.appPassword) {
 
             findNavController().navigate(R.id.action_appPasswordFragment_to_homeFragment)
         } else {

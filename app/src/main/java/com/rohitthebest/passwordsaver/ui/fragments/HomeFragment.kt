@@ -24,7 +24,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
-import com.google.gson.Gson
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
@@ -323,7 +322,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onDeleteClick(password: Password?) {
 
-
         AlertDialog.Builder(requireContext())
             .setTitle("Are Yo Sure?")
             .setPositiveButton("Delete") { dialogInterface, _ ->
@@ -364,37 +362,42 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
             } else {
 
-                password.key?.let { key ->
-                    FirebaseFirestore.getInstance()
-                        .collection(getString(R.string.savedPasswords))
-                        .document(key)
-                        .delete()
-                        .addOnSuccessListener {
+                if (isInternetAvailable(requireContext())) {
 
-                            try {
-                                Snackbar.make(
-                                    binding.homeFragCoordinatorLayout,
-                                    "Password Deleted",
-                                    Snackbar.LENGTH_LONG
-                                )
-                                    .setAction("Undo") {
+                    password.key?.let { key ->
+                        FirebaseFirestore.getInstance()
+                            .collection(getString(R.string.savedPasswords))
+                            .document(key)
+                            .delete()
+                            .addOnSuccessListener {
 
-                                        passwordViewModel.insert(password)
+                                try {
+                                    Snackbar.make(
+                                        binding.homeFragCoordinatorLayout,
+                                        "Password Deleted",
+                                        Snackbar.LENGTH_LONG
+                                    )
+                                        .setAction("Undo") {
 
-                                        uploadToFirebase(password)
+                                            passwordViewModel.insert(password)
 
-                                        showToast(requireContext(), "Password Restored")
-                                    }
-                                    .show()
-                            } catch (e: Exception) {
-                                e.printStackTrace()
+                                            uploadToFirebase(password)
+
+                                            showToast(requireContext(), "Password Restored")
+                                        }
+                                        .show()
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+
                             }
+                            .addOnFailureListener {
 
-                        }
-                        .addOnFailureListener {
-
-                            showToast(requireContext(), "${it.message}")
-                        }
+                                showToast(requireContext(), "${it.message}")
+                            }
+                    }
+                } else {
+                    showToast(requireContext(), NO_INTERNET_MESSAGE)
                 }
             }
 
@@ -412,8 +415,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     private fun uploadToFirebase(password: Password?) {
 
-        val gson = Gson()
-        val passwordString = gson.toJson(password)
+        val passwordString = convertPasswordToJson(password)
 
         val foregroundServiceIntent =
             Intent(
@@ -436,8 +438,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         pass = password?.password
         account = password?.accountName
 
-
-
         if (appSetting?.enterPasswordForVisibility == getString(R.string.t)) {
 
             openDialog(TARGET_FRAGMENT_REQUEST_CODE)
@@ -448,8 +448,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
                 EncryptData().decryptAES(pass, appSetting?.appPassword)
             )
         }
-
-
     }
 
     private fun openDialog(requestCode: Int) {

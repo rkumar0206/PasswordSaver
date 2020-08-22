@@ -13,7 +13,6 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import com.google.gson.Gson
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
@@ -232,8 +231,8 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                         .toString(36)}_${password.uid}"
 
                 passwordViewModel.insert(password)
-                val gson = Gson()
-                val passwordString = gson.toJson(password)
+
+                val passwordString = convertPasswordToJson(password)
 
                 val foregroundServiceIntent =
                     Intent(requireContext(), UploadSavedPasswordService::class.java)
