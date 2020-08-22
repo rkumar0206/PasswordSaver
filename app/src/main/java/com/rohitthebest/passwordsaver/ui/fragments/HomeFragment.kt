@@ -161,6 +161,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
                             requireContext(),
                             "You haven't saved any passwords on cloud yet!!!"
                         )
+                        saveData()
                     }
                 }
 

@@ -125,16 +125,14 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
                         savedPasswordList?.add(password)
                     }
-
-                    enableSaveBtn()
                 }
 
+                enableSaveBtn()
             })
 
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
     }
 
 
