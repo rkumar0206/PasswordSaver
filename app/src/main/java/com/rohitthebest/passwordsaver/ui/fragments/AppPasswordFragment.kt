@@ -1,6 +1,5 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
@@ -126,7 +125,7 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
         binding.setupPasswordCL.setOnClickListener(this)
         binding.enterPasswordCL.setOnClickListener(this)
         binding.confirmBtn.setOnClickListener(this)
-        binding.forgotPsswordTV.setOnClickListener(this)
+        /*binding.forgotPsswordTV.setOnClickListener(this)*/
         binding.changeModeTV.setOnClickListener(this)
     }
 
@@ -154,7 +153,7 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
                 }
             }
 
-            binding.forgotPsswordTV.id -> {
+            /*binding.forgotPsswordTV.id -> {
 
                 AlertDialog.Builder(requireContext())
                     .setTitle("Forgot Password?")
@@ -178,7 +177,7 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
                     .setCancelable(false)
                     .create()
                     .show()
-            }
+            }*/
 
             binding.changeModeTV.id -> {
 

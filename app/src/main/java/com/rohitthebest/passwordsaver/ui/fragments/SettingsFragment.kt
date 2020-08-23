@@ -36,6 +36,7 @@ import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
 import com.rohitthebest.passwordsaver.other.Constants.ONLINE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
+import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE2
 import com.rohitthebest.passwordsaver.other.Functions.Companion.convertAppSettingToJson
 import com.rohitthebest.passwordsaver.other.Functions.Companion.convertPasswordListToJson
 import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
@@ -172,6 +173,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
         if (checkedId == binding.offlineModeRB.id) {
 
             if (radioButtonChangeListener) {
+
                 val message =
                     "${getString(R.string.offline_text)}\n\n2 .If you choose offline mode all " +
                             "the passwords saved on cloud will" +
@@ -235,7 +237,16 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
             binding.saveBtn.id -> {
 
-                updateChanges()
+                //Ask For Password
+                val dialogFragment = CheckPasswordInSettingFragment().getInstance()
+                dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE2)
+                parentFragmentManager.let {
+                    dialogFragment.show(
+                        it,
+                        "CheckPasswordInSettingFragment"
+                    )
+                }
+
             }
 
             binding.backBtn.id -> {
@@ -256,7 +267,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
         parentFragmentManager.let { dialogFragment.show(it, "ChangeAppPasswordDialog") }
     }
-
 
     private fun updateChanges() {
 
@@ -450,6 +460,26 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
             }
         }
 
+        if (requestCode == TARGET_FRAGMENT_REQUEST_CODE2) {
+
+            data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
+
+                data.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
+
+                    if (it != getString(R.string.f)) {
+
+                        try {
+                            updateChanges()
+
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                    } else {
+                        showToast(requireContext(), "Password does not match!!!")
+                    }
+                }
+            }
+        }
     }
 
     private fun changePassword(newPassword: String) {
@@ -584,7 +614,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
             e.printStackTrace()
         }
     }
-
 
     override fun onDestroyView() {
         super.onDestroyView()
