@@ -228,8 +228,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
                                         val filteredList = it.filter { passwrd ->
 
-                                            passwrd.accountName?.toLowerCase(Locale.ROOT)!!
-                                                .contains(newTxt.toLowerCase(Locale.ROOT))
+                                            passwrd.userName?.toLowerCase(Locale.ROOT)!!
+                                                .contains(newTxt.toLowerCase(Locale.ROOT)) ||
+                                                    passwrd.siteName?.toLowerCase(Locale.ROOT)!!
+                                                        .contains(newTxt.toLowerCase(Locale.ROOT))
                                         }
 
                                         setUpRecyclerView(filteredList)
@@ -315,7 +317,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     override fun onCopyBtnClickListener(password: Password?) {
 
         pass = password?.password
-        account = password?.accountName
+        account = password?.userName
 
         if (appSetting?.enterPasswordForCopy == getString(R.string.t)) {
 
@@ -401,9 +403,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
                     showToast(requireContext(), NO_INTERNET_MESSAGE)
                 }
             }
-
         }
-
     }
 
     override fun onEditClick(password: Password?) {
@@ -436,7 +436,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     override fun onSeePasswordBtnClickListener(password: Password?) {
 
         pass = password?.password
-        account = password?.accountName
+        account = password?.userName
 
         if (appSetting?.enterPasswordForVisibility == getString(R.string.t)) {
 

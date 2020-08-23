@@ -22,7 +22,7 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
 
             itemBinding.apply {
 
-                accountNameTV.text = password?.accountName
+                accountNameTV.text = password?.userName
                 passwordTV.text = password?.password
                 if (password?.uid == "") {
 
@@ -141,7 +141,7 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
         override fun areContentsTheSame(oldItem: Password, newItem: Password): Boolean {
 
             return oldItem.id == newItem.id &&
-                    oldItem.accountName == newItem.accountName &&
+                    oldItem.userName == newItem.userName &&
                     oldItem.isSynced == newItem.isSynced &&
                     oldItem.password == newItem.password &&
                     oldItem.timeStamp == newItem.timeStamp

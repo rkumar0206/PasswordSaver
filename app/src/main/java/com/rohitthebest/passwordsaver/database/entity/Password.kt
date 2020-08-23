@@ -5,7 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "password_table")
 data class Password(
-    var accountName: String?,
+    var siteName: String? = "",
+    var userName: String?,
     var password: String?,
     var uid: String?,
     var isSynced: String,
@@ -17,6 +18,7 @@ data class Password(
     var id: Int? = null
 
     constructor() : this(
+        "",
         "",
         "",
         "",

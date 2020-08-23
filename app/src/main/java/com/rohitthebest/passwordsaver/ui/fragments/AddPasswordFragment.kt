@@ -90,7 +90,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                 receivedPassword = convertFromJsonToPassword(message)
 
                 Log.i("AddPasswordFrag", "${receivedPassword?.password}")
-                Log.i("AddPasswordFrag", "${receivedPassword?.accountName}")
+                Log.i("AddPasswordFrag", "${receivedPassword?.userName}")
 
                 isForEditing = true
             }
@@ -105,8 +105,8 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
             binding.titleTV.text = getString(R.string.editPassword)
 
-            binding.accountNameET.editText?.setText(it.accountName)
-
+            binding.userNameET.editText?.setText(it.userName)
+            binding.siteNameET.editText?.setText(it.siteName)
             try {
                 binding.passwordET.editText?.setText(
                     EncryptData().decryptAES(
@@ -201,7 +201,12 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
         if (appSetting?.mode == OFFLINE) {
 
             password.apply {
-                accountName = binding.accountNameET.editText?.text.toString().trim()
+                siteName = if (binding.siteNameET.editText?.text.toString().trim().isNotEmpty()) {
+                    binding.siteNameET.editText?.text.toString().trim()
+                } else {
+                    ""
+                }
+                userName = binding.userNameET.editText?.text.toString().trim()
                 this.password = encryptedPassword
                 uid = ""
                 key = ""
@@ -215,7 +220,12 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
         } else {
 
             password.apply {
-                accountName = binding.accountNameET.editText?.text.toString().trim()
+                siteName = if (binding.siteNameET.editText?.text.toString().trim().isNotEmpty()) {
+                    binding.siteNameET.editText?.text.toString().trim()
+                } else {
+                    ""
+                }
+                userName = binding.userNameET.editText?.text.toString().trim()
                 this.password = encryptedPassword
                 uid = appSetting?.uid
                 isSynced = NOT_SYNCED
@@ -258,7 +268,8 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
     private fun updatePassword(receivedPassword: Password?) {
 
-        receivedPassword?.accountName = binding.accountNameET.editText?.text.toString().trim()
+        receivedPassword?.siteName = binding.siteNameET.editText?.text.toString().trim()
+        receivedPassword?.userName = binding.userNameET.editText?.text.toString().trim()
         receivedPassword?.password =
             encryptPassword(binding.passwordET.editText?.text.toString().trim())
 
@@ -312,9 +323,9 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
     private fun validateForm(): Boolean {
 
-        if (binding.accountNameET.editText?.text.toString().trim().isEmpty()) {
+        if (binding.userNameET.editText?.text.toString().trim().isEmpty()) {
 
-            binding.accountNameET.error = EDITTEXT_EMPTY_MESSAGE
+            binding.userNameET.error = EDITTEXT_EMPTY_MESSAGE
             return false
         }
 
@@ -324,14 +335,13 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             return false
         }
 
-        return binding.accountNameET.error == null &&
+        return binding.userNameET.error == null &&
                 binding.passwordET.error == null
     }
 
     private fun textWatcher() {
 
-
-        binding.accountNameET.editText?.addTextChangedListener(object : TextWatcher {
+        binding.userNameET.editText?.addTextChangedListener(object : TextWatcher {
 
             override fun afterTextChanged(p0: Editable?) {}
             override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {}
@@ -339,10 +349,10 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 if (str?.isEmpty()!!) {
 
-                    binding.accountNameET.error = EDITTEXT_EMPTY_MESSAGE
+                    binding.userNameET.error = EDITTEXT_EMPTY_MESSAGE
                 } else {
 
-                    binding.accountNameET.error = null
+                    binding.userNameET.error = null
                 }
 
             }

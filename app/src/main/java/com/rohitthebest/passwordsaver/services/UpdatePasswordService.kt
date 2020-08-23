@@ -42,7 +42,8 @@ class UpdatePasswordService : Service() {
 
         val map: MutableMap<String, Any?> = HashMap()
 
-        map["accountName"] = password.accountName
+        map["siteName"] = password.siteName
+        map["accountName"] = password.userName
         map["password"] = password.password
 
         CoroutineScope(Dispatchers.IO).launch {
