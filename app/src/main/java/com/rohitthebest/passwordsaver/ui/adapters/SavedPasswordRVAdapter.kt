@@ -22,8 +22,15 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
 
             itemBinding.apply {
 
+                siteNameTV.text = if (password?.siteName != "") {
+
+                    password?.siteName
+                } else {
+                    "Not added"
+                }
                 accountNameTV.text = password?.userName
                 passwordTV.text = password?.password
+
                 if (password?.uid == "") {
 
                     syncBtn.visibility = View.GONE
