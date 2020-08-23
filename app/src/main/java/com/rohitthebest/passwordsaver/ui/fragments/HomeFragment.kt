@@ -37,6 +37,8 @@ import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE2
+import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE3
+import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE4
 import com.rohitthebest.passwordsaver.other.Functions.Companion.closeKeyboard
 import com.rohitthebest.passwordsaver.other.Functions.Companion.convertPasswordToJson
 import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
@@ -67,8 +69,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
     private var appSetting: AppSetting? = null
 
     private lateinit var mAdapter: SavedPasswordRVAdapter
+
     private var pass: String? = ""
     private var account: String? = ""
+    private var passwordMessage: Password? = null
 
     private lateinit var mAuth: FirebaseAuth
 
@@ -281,10 +285,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onItemClickListener(password: Password?) {
 
-        val action = HomeFragmentDirections
-            .actionHomeFragmentToAddPasswordFragment(convertPasswordToJson(password))
-
-        findNavController().navigate(action)
+        passwordMessage = password
+        openDialog(TARGET_FRAGMENT_REQUEST_CODE3)
     }
 
     override fun onSyncBtnClickListener(password: Password?) {
@@ -327,18 +329,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onDeleteClick(password: Password?) {
 
-        AlertDialog.Builder(requireContext())
-            .setTitle("Are Yo Sure?")
-            .setPositiveButton("Delete") { dialogInterface, _ ->
+        passwordMessage = password
 
-                deletePassword(password)
-                dialogInterface.dismiss()
-            }
-            .setNegativeButton("Cancel") { dialogInterface, _ ->
+        openDialog(TARGET_FRAGMENT_REQUEST_CODE4)
 
-                dialogInterface.dismiss()
-            }.create()
-            .show()
     }
 
     private fun deletePassword(password: Password?) {
@@ -414,10 +408,9 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
     override fun onEditClick(password: Password?) {
 
-        val action = HomeFragmentDirections
-            .actionHomeFragmentToAddPasswordFragment(convertPasswordToJson(password))
+        passwordMessage = password
 
-        findNavController().navigate(action)
+        openDialog(TARGET_FRAGMENT_REQUEST_CODE3)
     }
 
     private fun uploadToFirebase(password: Password?) {
@@ -507,6 +500,61 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
                 }
             }
         }
+        if (requestCode == TARGET_FRAGMENT_REQUEST_CODE3) {
+
+            data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
+
+                if (it != getString(R.string.f)) {
+
+                    try {
+
+                        openAddEditFragment(passwordMessage)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                } else {
+                    showToast(requireContext(), "Password does not match!!!")
+                }
+            }
+        }
+        if (requestCode == TARGET_FRAGMENT_REQUEST_CODE4) {
+
+            data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
+
+                if (it != getString(R.string.f)) {
+
+                    try {
+
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("Are Yo Sure?")
+                            .setPositiveButton("Delete") { dialogInterface, _ ->
+
+                                deletePassword(passwordMessage)
+                                dialogInterface.dismiss()
+                            }
+                            .setNegativeButton("Cancel") { dialogInterface, _ ->
+
+                                dialogInterface.dismiss()
+                            }.create()
+                            .show()
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                } else {
+                    showToast(requireContext(), "Password does not match!!!")
+                }
+            }
+        }
+
+    }
+
+    private fun openAddEditFragment(password: Password?) {
+
+        val action = HomeFragmentDirections
+            .actionHomeFragmentToAddPasswordFragment(convertPasswordToJson(password))
+
+        findNavController().navigate(action)
     }
 
     private fun copyToClipboard(text: String?) {
