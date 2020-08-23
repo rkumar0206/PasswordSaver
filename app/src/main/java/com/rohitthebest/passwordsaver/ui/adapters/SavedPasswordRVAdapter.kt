@@ -112,6 +112,8 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
             val edit = menu?.add(Menu.NONE, 2, 2, "Edit")
             edit?.setOnMenuItemClickListener(this)
 
+            val copyPassword = menu?.add(Menu.NONE, 3, 3, "Copy Password")
+            copyPassword?.setOnMenuItemClickListener(this)
         }
 
         override fun onMenuItemClick(menuItem: MenuItem?): Boolean {
@@ -130,6 +132,15 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
                     if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
 
                         mListener?.onEditClick(getItem(absoluteAdapterPosition))
+                    }
+                    return true
+                }
+
+                3 -> {
+
+                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
+
+                        mListener?.onCopyMenuClick(getItem(absoluteAdapterPosition))
                     }
                     return true
                 }
@@ -181,6 +192,7 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
         fun onSeePasswordBtnClickListener(password: Password?)
         fun onDeleteClick(password: Password?)
         fun onEditClick(password: Password?)
+        fun onCopyMenuClick(password: Password?)
     }
 
     fun setOnClickListener(listener: OnClickListener) {

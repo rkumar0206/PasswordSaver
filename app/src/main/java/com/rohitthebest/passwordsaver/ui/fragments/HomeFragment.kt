@@ -413,6 +413,20 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         openDialog(TARGET_FRAGMENT_REQUEST_CODE3)
     }
 
+    override fun onCopyMenuClick(password: Password?) {
+
+        pass = password?.password
+        account = password?.userName
+
+        if (appSetting?.enterPasswordForCopy == getString(R.string.t)) {
+
+            openDialog(TARGET_FRAGMENT_REQUEST_CODE2)
+        } else {
+
+            copyToClipboard(EncryptData().decryptAES(password?.password, appSetting?.appPassword))
+        }
+    }
+
     private fun uploadToFirebase(password: Password?) {
 
         val passwordString = convertPasswordToJson(password)
