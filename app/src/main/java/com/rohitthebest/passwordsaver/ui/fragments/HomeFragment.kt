@@ -612,6 +612,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         binding.addPasswordFAB.setOnClickListener(this)
         binding.homeFragCoordinatorLayout.setOnClickListener(this)
         binding.menuBtn.setOnClickListener(this)
+        binding.helpBtn.setOnClickListener(this)
     }
 
     override fun onClick(v: View?) {
@@ -626,6 +627,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
             binding.menuBtn.id -> {
 
                 showPopupMenu(binding.menuBtn)
+            }
+
+            binding.helpBtn.id -> {
+
+                findNavController().navigate(R.id.action_homeFragment_to_helpFragment)
             }
         }
 
@@ -685,6 +691,16 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         super.onDestroyView()
 
         _binding = null
-    }
 
+        try {
+
+            CoroutineScope(Dispatchers.IO).launch {
+
+                closeKeyboard(requireActivity())
+            }
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
 }

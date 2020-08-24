@@ -39,4 +39,5 @@
     <string name="save">Save</string>
     <string name="or">Or</string>
     <string name="password">Password</string>
+    <string name="helpbutton">helpButton</string>
 </resources>
