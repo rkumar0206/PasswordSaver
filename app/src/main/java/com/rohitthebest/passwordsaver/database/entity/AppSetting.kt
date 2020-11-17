@@ -5,11 +5,13 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "appSettingsTable")
 data class AppSetting(
-    var mode: String? = "",
-    var appPassword: String?,
+    var mode: String = "",
+    var appPassword: String,
     var uid: String?,
-    var enterPasswordForCopy: String? = "true",
-    var enterPasswordForVisibility: String? = "true"
+    var isPasswordRequiredForCopy: String = "true",
+    var isPasswordRequiredForVisibility: String = "true",
+    var isFingerprintEnabled: String = "false",
+    var key: String
 ) {
 
     @PrimaryKey(autoGenerate = false)
@@ -20,6 +22,8 @@ data class AppSetting(
         "",
         "",
         "true",
-        "true"
+        "true",
+        "false",
+        ""
     )
 }

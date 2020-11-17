@@ -22,8 +22,6 @@ class AppSettingViewModel @ViewModelInject constructor(
         repository.delete(appSetting)
     }
 
-    fun getData() = repository.getData()
-
-    fun getAppSettingByID() = repository.getAppSettingById(APP_SETTING_ID)
+    fun getAppSetting() = repository.getAppSetting()
 
 }

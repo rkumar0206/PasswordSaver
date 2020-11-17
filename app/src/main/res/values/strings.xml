@@ -1,7 +1,6 @@
 <resources>
     <string name="app_name">PasswordSaver</string>
-    <string name="offline_text">Your Password will be saved on your device. No Internet connection required.\n\nNote: 1. After you uninstall this app you will lose all your data.</string>
-    <string name="online_text">Your password will be saved on cloud database. Internet connection is required only while adding/deleting/editing password.\n\nNote : \n1. Your password will be safe even if you uninstall this app.\n2. The password is encrypted in the such a way that no one can see it (including us).</string>
+    <string name="online_text">Your password will be saved on cloud database. Internet connection is required only while adding/deleting/editing password.\n\nNote : \n1. Your password will remain safe even if you uninstall this app.\n2. The password is encrypted in the such a way that no one can see it (including us).</string>
     <string name="trySignIn_text">If you ever installed this app before, try signIn, your app settings and saved passwords will be restored.</string>
     <string name="setup_mode">Setup Mode</string>
     <string name="offline">Offline</string>
@@ -40,4 +39,5 @@
     <string name="or">Or</string>
     <string name="password">Password</string>
     <string name="helpbutton">helpButton</string>
+    <string name="offline_text">Your Password will be saved on your device. No Internet connection required.\n\nNote: 1. After you uninstall this app you will lose all your data.\n2. Also if you go to app setting and \'clear the data\' of this app you will lose all your password.</string>
 </resources>

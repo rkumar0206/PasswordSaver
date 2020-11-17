@@ -319,7 +319,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         pass = password?.password
         account = password?.userName
 
-        if (appSetting?.enterPasswordForCopy == getString(R.string.t)) {
+        if (appSetting?.isPasswordRequiredForCopy == getString(R.string.t)) {
 
             openDialog(TARGET_FRAGMENT_REQUEST_CODE2)
         } else {
@@ -418,7 +418,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         pass = password?.password
         account = password?.userName
 
-        if (appSetting?.enterPasswordForCopy == getString(R.string.t)) {
+        if (appSetting?.isPasswordRequiredForCopy == getString(R.string.t)) {
 
             openDialog(TARGET_FRAGMENT_REQUEST_CODE2)
         } else {
@@ -452,7 +452,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         pass = password?.password
         account = password?.userName
 
-        if (appSetting?.enterPasswordForVisibility == getString(R.string.t)) {
+        if (appSetting?.isPasswordRequiredForVisibility == getString(R.string.t)) {
 
             openDialog(TARGET_FRAGMENT_REQUEST_CODE)
         } else {

@@ -34,7 +34,7 @@ import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, View.OnClickListener {
+class IntroductionFragment : Fragment()/*, RadioGroup.OnCheckedChangeListener, View.OnClickListener*/ {
 
     private val TAG = "IntroductionFragment"
     private val viewModel: AppSettingViewModel by viewModels()
@@ -46,7 +46,7 @@ class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, Vie
     private lateinit var googleSignInClient: GoogleSignInClient
 
 
-    override fun onCreateView(
+   /* override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -251,7 +251,7 @@ class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, Vie
                                             )
                                         }
                                     }
-                                    .addOnFailureListener {exception ->
+                                    .addOnFailureListener { exception ->
 
                                         showToast(requireContext(), "${exception.message}")
                                     }
@@ -295,6 +295,6 @@ class IntroductionFragment : Fragment(), RadioGroup.OnCheckedChangeListener, Vie
         super.onDestroyView()
 
         _binding = null
-    }
+    }*/
 
 }

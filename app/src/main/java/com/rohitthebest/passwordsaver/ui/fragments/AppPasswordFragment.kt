@@ -73,44 +73,10 @@ class AppPasswordFragment : Fragment(), View.OnClickListener {
 
     private fun getAppSettingData() {
 
-        viewModel.getAppSettingByID().observe(viewLifecycleOwner, Observer {
+        viewModel.getAppSetting().observe(viewLifecycleOwner, Observer {
 
             try {
 
-                if (it.isNotEmpty()) {
-
-                    appSetting = if (it[0].appPassword != "") {
-
-                        showEnterPasswordCL()
-                        it[0]
-                    } else {
-
-                        showSetupPasswordCL()
-                        it[0]
-                    }
-
-                    if (it[0].mode == OFFLINE && mAuth.currentUser != null) {
-
-                        try {
-
-                            GlobalScope.launch {
-
-                                delay(7000)
-
-                                withContext(Dispatchers.Main) {
-
-                                    signOut()
-                                }
-                            }
-                        } catch (e: java.lang.Exception) {
-                            e.printStackTrace()
-                        }
-                    }
-
-                } else {
-
-                    findNavController().navigate(R.id.action_appPasswordFragment_to_introductionFragment)
-                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

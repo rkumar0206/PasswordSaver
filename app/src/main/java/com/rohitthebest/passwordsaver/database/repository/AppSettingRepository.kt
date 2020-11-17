@@ -12,7 +12,6 @@ class AppSettingRepository @Inject constructor(
 
     suspend fun delete(appSetting: AppSetting) = dao.delete(appSetting)
 
-    fun getData() = dao.getData()
+    fun getAppSetting() = dao.getAppSetting()
 
-    fun getAppSettingById(id : Int) = dao.getAppSetting(id)
 }

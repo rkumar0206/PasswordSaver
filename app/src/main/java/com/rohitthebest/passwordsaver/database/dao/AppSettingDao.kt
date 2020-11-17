@@ -15,8 +15,6 @@ interface AppSettingDao {
     suspend fun delete(appSetting: AppSetting)
 
     @Query("SELECT * FROM appSettingsTable")
-    fun getData(): LiveData<AppSetting>
+    fun getAppSetting(): LiveData<AppSetting>
 
-    @Query("SELECT * FROM appSettingsTable WHERE id= :id ")
-    fun getAppSetting(id : Int) : LiveData<List<AppSetting>>
 }

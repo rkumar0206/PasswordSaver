@@ -3,26 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/app_navigation"
-    app:startDestination="@id/appPasswordFragment">
+    app:startDestination="@id/appSetupFragment">
 
-    <fragment
-        android:id="@+id/introductionFragment"
-        android:name="com.rohitthebest.passwordsaver.ui.fragments.IntroductionFragment"
-        android:label="fragment_introduction"
-        tools:layout="@layout/fragment_introduction" >
-        <action
-            android:id="@+id/action_introductionFragment_to_appPasswordFragment"
-            app:destination="@id/appPasswordFragment"
-
-            app:enterAnim="@anim/slide_in_right"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/slide_out_right"
-
-            app:popUpTo="@id/introductionFragment"
-            app:popUpToInclusive="true" />
-
-    </fragment>
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.rohitthebest.passwordsaver.ui.fragments.HomeFragment"
@@ -73,16 +55,6 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/fade_out" />
-        <action
-            android:id="@+id/action_appPasswordFragment_to_introductionFragment"
-            app:destination="@id/introductionFragment"
-            app:enterAnim="@anim/fade_in"
-
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/fade_out"
-            app:popUpTo="@id/appPasswordFragment"
-            app:popUpToInclusive="true" />
     </fragment>
     <fragment
         android:id="@+id/settingsFragment"
@@ -94,4 +66,16 @@
         android:name="com.rohitthebest.passwordsaver.ui.fragments.HelpFragment"
         android:label="fragment_help"
         tools:layout="@layout/fragment_help" />
+
+    <fragment
+        android:id="@+id/appSetupFragment"
+        tools:layout="@layout/fragment_app_setup"
+        android:name="com.rohitthebest.passwordsaver.ui.fragments.AppSetupFragment"
+        android:label="AppSetupFragment" >
+        <action
+            android:id="@+id/action_appSetupFragment_to_appPasswordFragment"
+            app:destination="@id/appPasswordFragment"
+            app:popUpTo="@id/appSetupFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
 </navigation>

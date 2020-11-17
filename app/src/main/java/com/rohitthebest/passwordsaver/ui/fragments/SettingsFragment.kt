@@ -150,9 +150,9 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                 binding.modeChangeRG.check(binding.offlineModeRB.id)
             }
 
-            binding.copyCB.isChecked = it.enterPasswordForCopy == getString(R.string.t)
+            binding.copyCB.isChecked = it.isPasswordRequiredForCopy == getString(R.string.t)
 
-            binding.visibilityCB.isChecked = it.enterPasswordForVisibility == getString(R.string.t)
+            binding.visibilityCB.isChecked = it.isPasswordRequiredForVisibility == getString(R.string.t)
         }
 
         radioButtonChangeListener = true
@@ -272,7 +272,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
         appSetting?.let {
 
-            it.enterPasswordForCopy = if (binding.copyCB.isChecked) {
+            it.isPasswordRequiredForCopy = if (binding.copyCB.isChecked) {
 
                 getString(R.string.t)
             } else {
@@ -280,7 +280,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                 getString(R.string.f)
             }
 
-            it.enterPasswordForVisibility = if (binding.visibilityCB.isChecked) {
+            it.isPasswordRequiredForVisibility = if (binding.visibilityCB.isChecked) {
 
                 getString(R.string.t)
             } else {
