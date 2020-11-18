@@ -37,14 +37,14 @@ import com.rohitthebest.passwordsaver.other.Constants.ONLINE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE2
-import com.rohitthebest.passwordsaver.other.Functions.Companion.convertAppSettingToJson
-import com.rohitthebest.passwordsaver.other.Functions.Companion.convertPasswordListToJson
-import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
-import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.services.DeleteAppSettingAndPasswordService
 import com.rohitthebest.passwordsaver.services.UploadAppSettingsService
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
+import com.rohitthebest.passwordsaver.util.Functions.Companion.convertAppSettingToJson
+import com.rohitthebest.passwordsaver.util.Functions.Companion.convertPasswordListToJson
+import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
+import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 

@@ -1,4 +1,4 @@
-package com.rohitthebest.passwordsaver.other
+package com.rohitthebest.passwordsaver.util
 
 import android.app.Activity
 import android.content.Context
@@ -9,8 +9,10 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
-import com.rohitthebest.passwordsaver.util.CheckNetworkConnection
+import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class Functions {
@@ -32,6 +34,33 @@ class Functions {
         fun isInternetAvailable(context: Context): Boolean {
 
             return CheckNetworkConnection().isInternetAvailable(context)
+        }
+
+        fun encryptPassword(data: String): String? {
+
+            return try {
+
+                EncryptData().encryptWithSHA(data)
+
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+                ""
+            }
+        }
+
+        fun hideKeyBoard(activity: Activity) {
+
+            try {
+
+                GlobalScope.launch {
+
+                    closeKeyboard(activity)
+                }
+
+            } catch (e: Exception) {
+
+                e.printStackTrace()
+            }
         }
 
 

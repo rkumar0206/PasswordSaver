@@ -12,7 +12,7 @@ import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.DELETE_APPSETTING_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.DELETE_PASSWORD_SERVICE_MESSAGE
-import com.rohitthebest.passwordsaver.other.Functions
+import com.rohitthebest.passwordsaver.util.Functions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

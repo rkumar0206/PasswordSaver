@@ -9,8 +9,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.UPDATE_PASSWORD_SERVICE_MESSAGE
-import com.rohitthebest.passwordsaver.other.Functions.Companion.convertFromJsonToPassword
-import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
+import com.rohitthebest.passwordsaver.util.Functions.Companion.convertFromJsonToPassword
+import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

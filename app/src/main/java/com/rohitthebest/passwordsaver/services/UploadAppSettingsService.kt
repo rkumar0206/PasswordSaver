@@ -12,9 +12,9 @@ import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.other.Constants.APP_SETTING_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.NOTIFICATION_CHANNEL_ID
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
-import com.rohitthebest.passwordsaver.other.Functions.Companion.convertFromJsonToAppSetting
-import com.rohitthebest.passwordsaver.other.Functions.Companion.isInternetAvailable
-import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
+import com.rohitthebest.passwordsaver.util.Functions.Companion.convertFromJsonToAppSetting
+import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
+import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

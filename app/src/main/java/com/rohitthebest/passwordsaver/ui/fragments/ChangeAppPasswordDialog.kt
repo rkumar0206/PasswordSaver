@@ -14,9 +14,9 @@ import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.databinding.DialogChangePasswordBinding
 import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
-import com.rohitthebest.passwordsaver.other.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
+import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint

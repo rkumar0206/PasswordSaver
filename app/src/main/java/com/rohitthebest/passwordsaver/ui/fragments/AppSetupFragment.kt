@@ -6,7 +6,6 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.CompoundButton
 import android.widget.RadioGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -14,11 +13,8 @@ import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.databinding.FragmentAppSetupBinding
-import com.rohitthebest.passwordsaver.databinding.SetupFragmentLayoutBinding
-import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
-import kotlinx.coroutines.*
 
 class AppSetupFragment : Fragment(), View.OnClickListener,
     RadioGroup.OnCheckedChangeListener {
@@ -54,7 +50,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                 if (it != null) {
 
-                    findNavController().navigate(R.id.action_appSetupFragment_to_appPasswordFragment)
+                    findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
                 }
             } catch (e: Exception) {
                 e.printStackTrace()

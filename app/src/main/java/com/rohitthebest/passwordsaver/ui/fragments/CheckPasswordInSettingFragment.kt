@@ -10,9 +10,9 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
-import com.rohitthebest.passwordsaver.other.Functions
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
+import com.rohitthebest.passwordsaver.util.Functions
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_my_dialog.*
 import kotlinx.coroutines.CoroutineScope
