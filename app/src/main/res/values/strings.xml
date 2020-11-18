@@ -40,4 +40,6 @@
     <string name="password">Password</string>
     <string name="helpbutton">helpButton</string>
     <string name="offline_text">Your Password will be saved on your device. No Internet connection required.\n\nNote: 1. After you uninstall this app you will lose all your data.\n2. Also if you go to app setting and \'clear the data\' of this app you will lose all your password.</string>
+    <string name="mode">Mode</string>
+    <string name="log_in">Log In</string>
 </resources>

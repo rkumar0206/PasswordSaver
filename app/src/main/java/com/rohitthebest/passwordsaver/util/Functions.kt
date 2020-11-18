@@ -1,14 +1,16 @@
 package com.rohitthebest.passwordsaver.util
 
 import android.app.Activity
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.util.Log
+import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
-import com.rohitthebest.passwordsaver.database.entity.AppSetting
-import com.rohitthebest.passwordsaver.database.entity.Password
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
+import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -20,7 +22,7 @@ class Functions {
     companion object {
 
         private const val TAG = "Functions"
-        val gson = Gson()
+        private val mAuth = Firebase.auth
 
         fun showToast(context: Context, message: String, duration: Int = Toast.LENGTH_SHORT) {
             try {
@@ -35,6 +37,12 @@ class Functions {
 
             return CheckNetworkConnection().isInternetAvailable(context)
         }
+
+        fun showNoInternetMessage(context: Context) {
+
+            showToast(context, NO_INTERNET_MESSAGE)
+        }
+
 
         fun encryptPassword(data: String): String? {
 
@@ -63,6 +71,26 @@ class Functions {
             }
         }
 
+        fun copyToClipBoard(activity: Activity, text: String) {
+
+            val clipboardManager =
+                activity.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+            val clipData = ClipData.newPlainText("url", text)
+
+            clipboardManager.setPrimaryClip(clipData)
+
+        }
+
+        fun getUid(): String? {
+
+            if (mAuth.currentUser == null) {
+
+                return ""
+            }
+
+            return mAuth.currentUser?.uid
+        }
 
         suspend fun closeKeyboard(activity: Activity) {
             try {
@@ -84,44 +112,121 @@ class Functions {
             }
         }
 
-        fun convertPasswordToJson(password: Password?): String? {
+        fun View.show() {
 
-            return gson.toJson(password)
+            try {
+                this.visibility = View.VISIBLE
+
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
 
-        fun convertFromJsonToPassword(jsonString: String?): Password? {
+        fun View.hide() {
 
+            try {
+                this.visibility = View.GONE
 
-            val type = object : TypeToken<Password?>() {}.type
-
-            return gson.fromJson(jsonString, type)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
 
-        fun convertPasswordListToJson(passwordList: ArrayList<Password>?): String? {
+        fun Long.toStringM(radix: Int = 0): String {
 
-            return gson.toJson(passwordList)
+            val values = arrayOf(
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9",
+                "a",
+                "b",
+                "c",
+                "d",
+                "e",
+                "f",
+                "g",
+                "h",
+                "i",
+                "j",
+                "k",
+                "l",
+                "m",
+                "n",
+                "o",
+                "p",
+                "q",
+                "r",
+                "s",
+                "t",
+                "u",
+                "v",
+                "w",
+                "x",
+                "y",
+                "z",
+                "A",
+                "B",
+                "C",
+                "D",
+                "E",
+                "F",
+                "G",
+                "H",
+                "I",
+                "J",
+                "K",
+                "L",
+                "M",
+                "N",
+                "O",
+                "P",
+                "Q",
+                "R",
+                "S",
+                "T",
+                "U",
+                "V",
+                "W",
+                "X",
+                "Y",
+                "Z",
+                "!",
+                "@",
+                "#",
+                "$",
+                "%",
+                "^",
+                "&"
+            )
+            var str = ""
+            var d = this
+            var r: Int
+
+            if (radix in 1..69) {
+
+                if (d <= 0) {
+                    return d.toString()
+                }
+
+                while (d != 0L) {
+
+                    r = (d % radix).toInt()
+                    d /= radix
+                    str = values[r] + str
+                }
+
+                return str
+            }
+
+            return d.toString()
         }
-
-        fun convertFromPasswordListJsonToPasswordList(jsonString: String?): ArrayList<Password>? {
-
-            val type = object : TypeToken<ArrayList<Password?>>() {}.type
-
-            return gson.fromJson(jsonString, type)
-        }
-
-        fun convertAppSettingToJson(appSetting: AppSetting?): String? {
-
-            return gson.toJson(appSetting)
-        }
-
-        fun convertFromJsonToAppSetting(jsonString: String?): AppSetting? {
-
-            val type = object : TypeToken<AppSetting?>() {}.type
-
-            return gson.fromJson(jsonString, type)
-        }
-
-
     }
 }
