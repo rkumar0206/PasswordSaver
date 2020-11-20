@@ -1,62 +1,30 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
-import android.annotation.SuppressLint
-import android.app.Activity
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.view.*
-import android.widget.SearchView
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.view.menu.MenuBuilder
-import androidx.appcompat.view.menu.MenuPopupHelper
-import androidx.appcompat.widget.PopupMenu
-import androidx.core.content.ContextCompat
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
-import com.rohitthebest.passwordsaver.other.Constants
-import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.ONLINE
-import com.rohitthebest.passwordsaver.other.Constants.SHARED_PREFERENCE_KEY
-import com.rohitthebest.passwordsaver.other.Constants.SHARED_PREFERENCE_NAME
-import com.rohitthebest.passwordsaver.other.Constants.SYNCED
-import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
-import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE2
-import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE3
-import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE4
-import com.rohitthebest.passwordsaver.other.encryption.EncryptData
-import com.rohitthebest.passwordsaver.services.UploadSavedPasswordService
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import com.rohitthebest.passwordsaver.util.Functions.Companion.closeKeyboard
-import com.rohitthebest.passwordsaver.util.Functions.Companion.convertPasswordToJson
-import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
-import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-import java.util.*
-import kotlin.random.Random
 
 @AndroidEntryPoint
-class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
+class HomeFragment : Fragment(R.layout.fragment_home)/*, View.OnClickListener,
     SavedPasswordRVAdapter.OnClickListener, android.widget.PopupMenu.OnMenuItemClickListener,
-    PopupMenu.OnMenuItemClickListener {
+    PopupMenu.OnMenuItemClickListener*/ {
 
     //private val TAG = "HomeFragment"
 
@@ -94,7 +62,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
 
         mAdapter = SavedPasswordRVAdapter()
 
-        loadData()
+        //loadData()
 
         mAuth = Firebase.auth
 
@@ -105,34 +73,31 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
             delay(300)
             withContext(Dispatchers.Main) {
 
-                getAllSavedPassword()
+                //getAllSavedPassword()
             }
         }
 
-        initListeners()
+        //initListeners()
     }
 
     private fun getAppSetting() {
 
-        viewModel.getAppSettingByID().observe(viewLifecycleOwner, Observer {
+        viewModel.getAppSetting().observe(viewLifecycleOwner, Observer {
 
-            if (it.isNotEmpty()) {
+            if (it != null) {
 
-                appSetting = it[0]
-
-                if (it[0].mode == ONLINE
-                    && mAuth.currentUser != null
-                    && isInternetAvailable(requireContext())
-                    && !isPasswordAdded
-                ) {
-                    syncData()
-                }
-
+                appSetting = it
             }
         })
     }
 
-    private fun syncData() {
+    override fun onResume() {
+        super.onResume()
+
+        //todo : ask  for appPassword
+    }
+
+/*    private fun syncData() {
 
         try {
             try {
@@ -685,7 +650,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), View.OnClickListener,
         binding.savedPasswordRV.visibility = View.VISIBLE
         binding.searchView.visibility = View.VISIBLE
 
-    }
+    }*/
 
     override fun onDestroyView() {
         super.onDestroyView()

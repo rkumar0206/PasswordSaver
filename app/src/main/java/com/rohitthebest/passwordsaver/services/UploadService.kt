@@ -41,7 +41,7 @@ class UploadService : Service() {
             this,
             NOTIFICATION_CHANNEL_ID
         ).setSmallIcon(image)
-            .setContentTitle("Uploading changes to cloud.")
+            .setContentTitle("Uploading app settings to cloud.")
             .build()
 
         startForeground(randomId!!, notification)

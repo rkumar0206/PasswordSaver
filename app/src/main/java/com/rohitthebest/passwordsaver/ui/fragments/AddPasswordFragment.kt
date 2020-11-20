@@ -20,24 +20,21 @@ import com.rohitthebest.passwordsaver.databinding.FragmentAddPasswordBinding
 import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
-import com.rohitthebest.passwordsaver.other.Constants.SAVED_PASSWORD_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.UPDATE_PASSWORD_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.services.UpdatePasswordService
-import com.rohitthebest.passwordsaver.services.UploadSavedPasswordService
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import com.rohitthebest.passwordsaver.util.CheckPasswordPattern
-import com.rohitthebest.passwordsaver.util.Functions
-import com.rohitthebest.passwordsaver.util.Functions.Companion.convertFromJsonToPassword
-import com.rohitthebest.passwordsaver.util.Functions.Companion.convertPasswordToJson
+import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertFromJsonToPassword
+import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertPasswordToJson
+import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.uploadDocumentToFireStore
+import com.rohitthebest.passwordsaver.util.Functions.Companion.hideKeyBoard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
+import com.rohitthebest.passwordsaver.util.Functions.Companion.toStringM
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 @AndroidEntryPoint
@@ -93,13 +90,28 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                 Log.i("AddPasswordFrag", "${receivedPassword?.userName}")
 
                 isForEditing = true
+
+                updateUI()
             }
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
         }
     }
 
-    private fun updateUI(receivedPassword: Password?) {
+    private fun getAppSetting() {
+
+        try {
+
+            appSettingViewModel.getAppSetting().observe(viewLifecycleOwner, Observer {
+
+                appSetting = it
+            })
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun updateUI() {
 
         receivedPassword?.let {
 
@@ -120,32 +132,10 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
         }
     }
 
-    private fun getAppSetting() {
-
-        try {
-
-            appSettingViewModel.getAppSettingByID().observe(viewLifecycleOwner, Observer {
-
-                if (it.isNotEmpty()) {
-
-                    appSetting = it[0]
-
-                    if (isForEditing) {
-
-                        updateUI(receivedPassword)
-                    }
-                }
-            })
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
     private fun initListeners() {
 
         binding.backBtn.setOnClickListener(this)
         binding.saveBtn.setOnClickListener(this)
-        binding.checkPasswordStrengthBtn.setOnClickListener(this)
         binding.mainCL.setOnClickListener(this) // for closing keyboard
     }
 
@@ -172,23 +162,9 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                 requireActivity().onBackPressed()
             }
 
-            binding.checkPasswordStrengthBtn.id -> {
-
-                if (binding.passwordStrengthCL.visibility == View.VISIBLE) {
-
-                    hideCheckPassStrengthCL()
-                } else {
-                    showCheckPassStrengthCL()
-                }
-            }
-
         }
 
-        //closing keyboard if opened
-        CoroutineScope(Dispatchers.IO).launch {
-
-            Functions.closeKeyboard(requireActivity())
-        }
+        hideKeyBoard(requireActivity())
     }
 
     private fun insertToDatabase() {
@@ -198,64 +174,61 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
         val password = Password()
 
+        password.apply {
+
+            siteName = if (binding.siteNameET.editText?.text.toString().trim().isNotEmpty()) {
+                binding.siteNameET.editText?.text.toString().trim()
+            } else {
+                ""
+            }
+            userName = binding.userNameET.editText?.text.toString().trim()
+            this.password = encryptedPassword
+            uid = ""
+            key = ""
+            isSynced = NOT_SYNCED
+            timeStamp = System.currentTimeMillis()
+        }
+
+
         if (appSetting?.mode == OFFLINE) {
 
-            password.apply {
-                siteName = if (binding.siteNameET.editText?.text.toString().trim().isNotEmpty()) {
-                    binding.siteNameET.editText?.text.toString().trim()
-                } else {
-                    ""
-                }
-                userName = binding.userNameET.editText?.text.toString().trim()
-                this.password = encryptedPassword
-                uid = ""
-                key = ""
-                isSynced = NOT_SYNCED
-                timeStamp = System.currentTimeMillis()
-            }
-
             passwordViewModel.insert(password)
-
             requireActivity().onBackPressed()
         } else {
 
-            password.apply {
-                siteName = if (binding.siteNameET.editText?.text.toString().trim().isNotEmpty()) {
-                    binding.siteNameET.editText?.text.toString().trim()
-                } else {
-                    ""
-                }
-                userName = binding.userNameET.editText?.text.toString().trim()
-                this.password = encryptedPassword
-                uid = appSetting?.uid
-                isSynced = NOT_SYNCED
-                key = ""
-                timeStamp = System.currentTimeMillis()
-            }
+            password.uid = appSetting?.uid
+
+            password.key = "${System.currentTimeMillis().toStringM(69)}_${
+                Random.nextLong(
+                    100,
+                    9223372036854775
+                ).toStringM(69)
+            }_${password.uid}"
 
             if (isInternetAvailable(requireContext())) {
 
                 password.isSynced = SYNCED
-                password.key =
-                    "${System.currentTimeMillis().toString(36)}_${Random.nextInt(1000, 1000000)
-                        .toString(36)}_${password.uid}"
 
                 passwordViewModel.insert(password)
 
-                val passwordString = convertPasswordToJson(password)
+                //Uploading to firestore
 
-                val foregroundServiceIntent =
-                    Intent(requireContext(), UploadSavedPasswordService::class.java)
-                foregroundServiceIntent.putExtra(SAVED_PASSWORD_SERVICE_MESSAGE, passwordString)
+                convertPasswordToJson(password)?.let { pass ->
 
-                ContextCompat.startForegroundService(requireContext(), foregroundServiceIntent)
+                    uploadDocumentToFireStore(
+                        requireContext(),
+                        pass,
+                        getString(R.string.savedPasswords),
+                        password.key!!
+                    )
+
+                }
 
                 requireActivity().onBackPressed()
 
             } else {
 
                 password.isSynced = NOT_SYNCED
-                password.key = ""
                 passwordViewModel.insert(password)
 
                 requireActivity().onBackPressed()
@@ -314,7 +287,6 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
         return try {
 
             EncryptData().encryptWithAES(password, appSetting?.appPassword)
-
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
             ""
@@ -431,27 +403,15 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
     override fun onDestroyView() {
         super.onDestroyView()
 
-        _binding = null
-
         //closing keyboard if opened
         try {
-            CoroutineScope(Dispatchers.IO).launch {
 
-                Functions.closeKeyboard(requireActivity())
-            }
+            hideKeyBoard(requireActivity())
+
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
+        _binding = null
     }
-
-    private fun showCheckPassStrengthCL() {
-
-        binding.passwordStrengthCL.visibility = View.VISIBLE
-    }
-
-    private fun hideCheckPassStrengthCL() {
-
-        binding.passwordStrengthCL.visibility = View.INVISIBLE
-    }
-
 }

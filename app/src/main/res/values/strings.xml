@@ -12,7 +12,7 @@
     <string name="backbutton">backButton</string>
     <string name="save_button">save Button</string>
     <string name="user_name">Username</string>
-    <string name="check_password_strength">Check password strength</string>
+    <string name="check_password_strength">Password strength</string>
     <string name="mixture_of_both_uppercase_and_lowercase_characters">Mixture of both uppercase and lowercase characters</string>
     <string name="one_special_character_amp"><![CDATA[One special character (!@#?&=+)]]></string>
     <string name="at_least_8_characters">At least 8 characters</string>
@@ -42,4 +42,5 @@
     <string name="offline_text">Your Password will be saved on your device. No Internet connection required.\n\nNote: 1. After you uninstall this app you will lose all your data.\n2. Also if you go to app setting and \'clear the data\' of this app you will lose all your password.</string>
     <string name="mode">Mode</string>
     <string name="log_in">Log In</string>
+    <string name="addbutton">addButton</string>
 </resources>
