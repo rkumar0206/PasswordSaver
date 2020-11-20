@@ -1,13 +1,23 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
+import android.Manifest
+import android.app.KeyguardManager
+import android.content.Context
+import android.content.pm.PackageManager
+import android.hardware.biometrics.BiometricPrompt
+import android.os.Build
 import android.os.Bundle
+import android.os.CancellationSignal
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
+import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
@@ -41,6 +51,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
     private var appSetting: AppSetting? = null
 
     private lateinit var mAdapter: SavedPasswordRVAdapter
+
+    private var cancellationSignal: CancellationSignal? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -174,7 +186,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     override fun onItemClickListener(password: Password?) {
 
-        //todo : open for editing
+        val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
+            convertPasswordToJson(password)
+        )
+
+        findNavController().navigate(action)
     }
 
     override fun onSyncBtnClickListener(password: Password?) {
@@ -212,7 +228,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     override fun onEditClick(password: Password?) {
 
-        //todo: edit password
+        val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
+            convertPasswordToJson(password)
+        )
+
+        findNavController().navigate(action)
     }
 
     override fun onCopyMenuClick(password: Password?) {
@@ -220,10 +240,84 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         //todo: copy password
     }
 
+    private fun checkForFingerPrintValidation() {
+
+        //todo : check for finegrprint validation
+    }
+
+    private fun checkForPasswordValidation() {
+
+        //todo : check for password
+    }
+
+    private fun checkBiometricSupport(): Boolean {
+
+        val keyguardManager =
+            requireActivity().getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+
+        if (!keyguardManager.isKeyguardSecure) {
+
+            showToast(requireContext(), "Fingerprint authentication has not been enabled.")
+            return false
+        }
+
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.USE_BIOMETRIC
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+
+            showToast(requireContext(), "Permission denied")
+            return false
+        }
+
+        return requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
+    }
+
+    private val authenticationCallback: BiometricPrompt.AuthenticationCallback
+        get() = @RequiresApi(Build.VERSION_CODES.P)
+        object : BiometricPrompt.AuthenticationCallback() {
+
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                super.onAuthenticationError(errorCode, errString)
+
+                showToast(requireContext(), "Authentication Failed")
+            }
+
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
+                super.onAuthenticationSucceeded(result)
+
+                //todo : password succeed
+            }
+        }
+
+    private fun getCancellationSignal(): CancellationSignal {
+
+        cancellationSignal = CancellationSignal()
+
+        cancellationSignal?.setOnCancelListener {
+
+            showToast(requireContext(), "Authentication was cancelled")
+        }
+
+        return cancellationSignal as CancellationSignal
+    }
+
+
     override fun onResume() {
         super.onResume()
 
-        //todo : ask  for appPassword
+        if (!requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
+
+            //todo : don't ask for fingerprint
+        } else {
+
+            if (checkBiometricSupport()) {
+
+
+            }
+        }
+
     }
 
 /*    private fun syncData() {
