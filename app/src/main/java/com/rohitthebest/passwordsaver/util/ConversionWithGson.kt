@@ -11,13 +11,13 @@ class ConversionWithGson {
 
         private val gson = Gson()
 
-        fun convertPasswordToJson(password: Password?): String? {
+        fun convertPasswordToJson(password: Password?): String {
 
             return gson.toJson(password)
         }
 
 
-        fun convertFromJsonToPassword(jsonString: String?): Password? {
+        fun convertFromJsonToPassword(jsonString: String?): Password {
 
 
             val type = object : TypeToken<Password?>() {}.type

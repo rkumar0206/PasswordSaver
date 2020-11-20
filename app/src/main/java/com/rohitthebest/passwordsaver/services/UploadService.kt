@@ -13,6 +13,7 @@ import com.rohitthebest.passwordsaver.other.Constants.DOCUMENT_KEY
 import com.rohitthebest.passwordsaver.other.Constants.NOTIFICATION_CHANNEL_ID
 import com.rohitthebest.passwordsaver.other.Constants.RANDOM_ID_KEY
 import com.rohitthebest.passwordsaver.other.Constants.UPLOAD_DATA_KEY
+import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertFromJsonToPassword
 import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertJsonToAppSetting
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -65,16 +66,15 @@ class UploadService : Service() {
 
                         Log.d(
                             TAG,
-                            "onStartCommand: Uploaded renter details to collection $collection with key : $key"
+                            "onStartCommand: Uploaded appSetting to collection $collection with key : $key"
                         )
                         stopSelf()
                     }
                 }
 
-/*
-                getString(R.string.payments) -> {
+                getString(R.string.savedPasswords) -> {
 
-                    if (insertToFireStore(docRef, convertJSONtoPayment(uploadData))) {
+                    if (insertToFireStore(docRef, convertFromJsonToPassword(uploadData))) {
 
                         Log.d(
                             TAG,
@@ -83,7 +83,6 @@ class UploadService : Service() {
                         stopSelf()
                     }
                 }
-*/
 
                 else -> {
 

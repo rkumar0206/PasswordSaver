@@ -4,27 +4,31 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
+import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
+import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertPasswordToJson
+import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper
 import com.rohitthebest.passwordsaver.util.Functions.Companion.closeKeyboard
+import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
+import com.rohitthebest.passwordsaver.util.Functions.Companion.show
+import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
+import java.util.*
 
 @AndroidEntryPoint
-class HomeFragment : Fragment(R.layout.fragment_home)/*, View.OnClickListener,
-    SavedPasswordRVAdapter.OnClickListener, android.widget.PopupMenu.OnMenuItemClickListener,
-    PopupMenu.OnMenuItemClickListener*/ {
+class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.OnClickListener {
 
     //private val TAG = "HomeFragment"
 
@@ -37,14 +41,6 @@ class HomeFragment : Fragment(R.layout.fragment_home)/*, View.OnClickListener,
     private var appSetting: AppSetting? = null
 
     private lateinit var mAdapter: SavedPasswordRVAdapter
-
-    private var pass: String? = ""
-    private var account: String? = ""
-    private var passwordMessage: Password? = null
-
-    private lateinit var mAuth: FirebaseAuth
-
-    private var isPasswordAdded = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -64,16 +60,15 @@ class HomeFragment : Fragment(R.layout.fragment_home)/*, View.OnClickListener,
 
         //loadData()
 
-        mAuth = Firebase.auth
-
         getAppSetting()
 
+        showProgressBar()
         GlobalScope.launch {
 
             delay(300)
             withContext(Dispatchers.Main) {
 
-                //getAllSavedPassword()
+                getAllSavedPassword()
             }
         }
 
@@ -89,6 +84,140 @@ class HomeFragment : Fragment(R.layout.fragment_home)/*, View.OnClickListener,
                 appSetting = it
             }
         })
+    }
+
+
+    private fun getAllSavedPassword() {
+
+        try {
+
+            passwordViewModel.getAllPasswordsList().observe(viewLifecycleOwner, Observer {
+
+                if (it.isNotEmpty()) {
+
+                    hideNoPassTV()
+
+                    setUpSearchView(it)
+                } else {
+
+                    showNoPassTV()
+                }
+
+                setUpRecyclerView(it)
+            })
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun setUpSearchView(it: List<Password>?) {
+
+        binding.searchView.setOnQueryTextListener(object :
+            SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(p0: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                try {
+                    newText?.let { newTxt ->
+
+                        if (newTxt.trim().isEmpty()) {
+
+                            setUpRecyclerView(it)
+                        } else {
+
+                            val filteredList = it?.filter { passwrd ->
+
+                                passwrd.userName?.toLowerCase(Locale.ROOT)!!
+                                    .contains(newTxt.toLowerCase(Locale.ROOT)) ||
+                                        passwrd.siteName?.toLowerCase(Locale.ROOT)!!
+                                            .contains(newTxt.toLowerCase(Locale.ROOT))
+                            }
+
+                            setUpRecyclerView(filteredList)
+                        }
+                    }
+                } catch (e: java.lang.Exception) {
+                    e.printStackTrace()
+                }
+                return false
+            }
+        })
+    }
+
+    private fun setUpRecyclerView(passwordList: List<Password>?) {
+
+        try {
+
+            passwordList?.let {
+
+                mAdapter.submitList(it)
+
+                binding.savedPasswordRV.apply {
+
+                    layoutManager = LinearLayoutManager(requireContext())
+                    setHasFixedSize(true)
+                    adapter = mAdapter
+
+                }
+                mAdapter.setOnClickListener(this)
+            }
+
+            hideProgressBar()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    override fun onItemClickListener(password: Password?) {
+
+        //todo : open for editing
+    }
+
+    override fun onSyncBtnClickListener(password: Password?) {
+
+        if (password?.isSynced == NOT_SYNCED) {
+
+            FirebaseServiceHelper.uploadDocumentToFireStore(
+                requireContext(),
+                convertPasswordToJson(password),
+                getString(R.string.savedPasswords),
+                password.key!!
+            )
+
+            showToast(requireContext(), "Password synced")
+        } else {
+
+            showToast(requireContext(), "Already synced")
+        }
+    }
+
+    override fun onCopyBtnClickListener(password: Password?) {
+
+        //todo: copy password
+    }
+
+    override fun onSeePasswordBtnClickListener(password: Password?) {
+
+        //todo: see password
+    }
+
+    override fun onDeleteClick(password: Password?) {
+
+        //todo: delete password
+    }
+
+    override fun onEditClick(password: Password?) {
+
+        //todo: edit password
+    }
+
+    override fun onCopyMenuClick(password: Password?) {
+
+        //todo: copy password
     }
 
     override fun onResume() {
@@ -636,6 +765,26 @@ class HomeFragment : Fragment(R.layout.fragment_home)/*, View.OnClickListener,
 
         return false
     }
+*/
+
+    private fun showProgressBar() {
+
+        try {
+            binding.homeProgressBar.show()
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun hideProgressBar() {
+
+        try {
+
+            binding.homeProgressBar.hide()
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
 
     private fun showNoPassTV() {
 
@@ -650,7 +799,7 @@ class HomeFragment : Fragment(R.layout.fragment_home)/*, View.OnClickListener,
         binding.savedPasswordRV.visibility = View.VISIBLE
         binding.searchView.visibility = View.VISIBLE
 
-    }*/
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()

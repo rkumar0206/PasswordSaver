@@ -1,6 +1,5 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
-import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -9,7 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -21,9 +19,7 @@ import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
 import com.rohitthebest.passwordsaver.other.Constants.SYNCED
-import com.rohitthebest.passwordsaver.other.Constants.UPDATE_PASSWORD_SERVICE_MESSAGE
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
-import com.rohitthebest.passwordsaver.services.UpdatePasswordService
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import com.rohitthebest.passwordsaver.util.CheckPasswordPattern
@@ -259,17 +255,14 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 receivedPassword?.let { passwordViewModel.insert(it) }
 
-                val foregroundServiceIntent =
-                    Intent(requireContext(), UpdatePasswordService::class.java)
-                foregroundServiceIntent.putExtra(
-                    UPDATE_PASSWORD_SERVICE_MESSAGE,
-                    convertPasswordToJson(receivedPassword)
+                uploadDocumentToFireStore(
+                    requireContext(),
+                    convertPasswordToJson(receivedPassword),
+                    getString(R.string.savedPasswords),
+                    receivedPassword?.key!!
                 )
 
-                ContextCompat.startForegroundService(requireContext(), foregroundServiceIntent)
-
                 showToast(requireContext(), "Password updated")
-
                 requireActivity().onBackPressed()
             } else {
 
