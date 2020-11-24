@@ -1,22 +1,21 @@
 package com.rohitthebest.passwordsaver.ui.adapters
 
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.Password
-import com.rohitthebest.passwordsaver.databinding.SavedPasswordAdapterLayoutBinding
-import com.rohitthebest.passwordsaver.other.Constants.SYNCED
+import com.rohitthebest.passwordsaver.databinding.AdapterShowSavedPasswordBinding
 
 class SavedPasswordRVAdapter : ListAdapter<Password,
         SavedPasswordRVAdapter.SavedPasswordViewHolder>(DiffUtilCallBack()) {
 
     private var mListener: OnClickListener? = null
 
-    inner class SavedPasswordViewHolder(private val itemBinding: SavedPasswordAdapterLayoutBinding) :
-        RecyclerView.ViewHolder(itemBinding.root), View.OnClickListener,
-        View.OnCreateContextMenuListener, MenuItem.OnMenuItemClickListener {
+    inner class SavedPasswordViewHolder(private val itemBinding: AdapterShowSavedPasswordBinding) :
+        RecyclerView.ViewHolder(itemBinding.root), View.OnClickListener {
 
         fun setData(password: Password?) {
 
@@ -28,43 +27,21 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
                 } else {
                     "Not added"
                 }
-                accountNameTV.text = password?.userName
-                passwordTV.text = password?.password
-
-                if (password?.uid == "") {
-
-                    syncBtn.visibility = View.GONE
-                } else {
-
-                    syncBtn.visibility = View.VISIBLE
-
-                    if (password?.isSynced == SYNCED) {
-
-                        syncBtn.setImageResource(R.drawable.ic_baseline_sync_24)
-                    } else {
-
-                        syncBtn.setImageResource(R.drawable.ic_baseline_sync_disabled_24)
-                    }
-                }
-
+                userIdTV.text = password?.userName
             }
         }
 
         init {
 
-            itemBinding.cardView.setOnClickListener(this)
-            itemBinding.copyBtn.setOnClickListener(this)
-            itemBinding.syncBtn.setOnClickListener(this)
-            itemBinding.visibilityBtn.setOnClickListener(this)
-
-            itemBinding.cardView.setOnCreateContextMenuListener(this)
+            itemBinding.adapterSavedPasswordCV.setOnClickListener(this)
+            itemBinding.adapterSyncBtn.setOnClickListener(this)
         }
 
         override fun onClick(v: View?) {
 
             when (v?.id) {
 
-                itemBinding.cardView.id -> {
+                itemBinding.adapterSavedPasswordCV.id -> {
 
                     if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
 
@@ -72,23 +49,7 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
                     }
                 }
 
-                itemBinding.visibilityBtn.id -> {
-
-                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
-
-                        mListener?.onSeePasswordBtnClickListener(getItem(absoluteAdapterPosition))
-                    }
-                }
-
-                itemBinding.copyBtn.id -> {
-
-                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
-
-                        mListener?.onCopyBtnClickListener(getItem(absoluteAdapterPosition))
-                    }
-                }
-
-                itemBinding.syncBtn.id -> {
+                itemBinding.adapterSyncBtn.id -> {
 
                     if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
 
@@ -97,57 +58,6 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
                 }
             }
         }
-
-        override fun onCreateContextMenu(
-            menu: ContextMenu?,
-            view: View?,
-            menuInfo: ContextMenu.ContextMenuInfo?
-        ) {
-
-            menu?.setHeaderTitle("Select Action")
-
-            val delete = menu?.add(Menu.NONE, 1, 1, "Delete")
-            delete?.setOnMenuItemClickListener(this)
-
-            val edit = menu?.add(Menu.NONE, 2, 2, "Edit")
-            edit?.setOnMenuItemClickListener(this)
-
-            val copyPassword = menu?.add(Menu.NONE, 3, 3, "Copy Password")
-            copyPassword?.setOnMenuItemClickListener(this)
-        }
-
-        override fun onMenuItemClick(menuItem: MenuItem?): Boolean {
-
-            when (menuItem?.itemId) {
-                1 -> {
-                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
-
-                        mListener?.onDeleteClick(getItem(absoluteAdapterPosition))
-                    }
-                    return true
-                }
-
-                2 -> {
-
-                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
-
-                        mListener?.onEditClick(getItem(absoluteAdapterPosition))
-                    }
-                    return true
-                }
-
-                3 -> {
-
-                    if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
-
-                        mListener?.onCopyMenuClick(getItem(absoluteAdapterPosition))
-                    }
-                    return true
-                }
-            }
-            return false
-        }
-
     }
 
     class DiffUtilCallBack : DiffUtil.ItemCallback<Password>() {
@@ -170,7 +80,7 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SavedPasswordViewHolder {
 
-        val itemBinding = SavedPasswordAdapterLayoutBinding.inflate(
+        val itemBinding = AdapterShowSavedPasswordBinding.inflate(
             LayoutInflater.from(parent.context),
             parent,
             false
@@ -188,11 +98,6 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
 
         fun onItemClickListener(password: Password?)
         fun onSyncBtnClickListener(password: Password?)
-        fun onCopyBtnClickListener(password: Password?)
-        fun onSeePasswordBtnClickListener(password: Password?)
-        fun onDeleteClick(password: Password?)
-        fun onEditClick(password: Password?)
-        fun onCopyMenuClick(password: Password?)
     }
 
     fun setOnClickListener(listener: OnClickListener) {

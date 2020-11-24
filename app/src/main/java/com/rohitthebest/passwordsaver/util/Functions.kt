@@ -80,6 +80,8 @@ class Functions {
 
             clipboardManager.setPrimaryClip(clipData)
 
+            showToast(activity, "copied")
+
         }
 
         fun getUid(): String? {

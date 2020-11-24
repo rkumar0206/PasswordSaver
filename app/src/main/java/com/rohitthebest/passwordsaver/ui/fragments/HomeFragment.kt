@@ -3,6 +3,7 @@ package com.rohitthebest.passwordsaver.ui.fragments
 import android.Manifest
 import android.app.KeyguardManager
 import android.content.Context
+import android.content.DialogInterface
 import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
@@ -24,12 +25,14 @@ import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
 import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
+import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertPasswordToJson
 import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper
 import com.rohitthebest.passwordsaver.util.Functions.Companion.closeKeyboard
+import com.rohitthebest.passwordsaver.util.Functions.Companion.copyToClipBoard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
 import com.rohitthebest.passwordsaver.util.Functions.Companion.show
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
@@ -53,6 +56,9 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
     private lateinit var mAdapter: SavedPasswordRVAdapter
 
     private var cancellationSignal: CancellationSignal? = null
+
+    private var buttonAction: String = ""
+    private var passwrd: Password? = Password()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -97,7 +103,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             }
         })
     }
-
 
     private fun getAllSavedPassword() {
 
@@ -186,6 +191,9 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     override fun onItemClickListener(password: Password?) {
 
+        passwrd = password
+        buttonAction = getString(R.string.onItemClick)
+
         val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
             convertPasswordToJson(password)
         )
@@ -213,20 +221,30 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     override fun onCopyBtnClickListener(password: Password?) {
 
+        passwrd = password
+        buttonAction = getString(R.string.onCopyBtnClick)
+
         //todo: copy password
     }
 
     override fun onSeePasswordBtnClickListener(password: Password?) {
 
+        passwrd = password
+        buttonAction = getString(R.string.onSeePasswordBtnClick)
         //todo: see password
     }
 
     override fun onDeleteClick(password: Password?) {
 
+        passwrd = password
+        buttonAction = getString(R.string.onDeleteBtnClick)
         //todo: delete password
     }
 
     override fun onEditClick(password: Password?) {
+
+        passwrd = password
+        buttonAction = getString(R.string.onEditClick)
 
         val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
             convertPasswordToJson(password)
@@ -237,18 +255,99 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     override fun onCopyMenuClick(password: Password?) {
 
+        passwrd = password
+        buttonAction = getString(R.string.onCopyBtnClick)
         //todo: copy password
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     private fun checkForFingerPrintValidation() {
 
-        //todo : check for finegrprint validation
+        /**check for fingerprint validation**/
+
+        val biometricPrompt = BiometricPrompt.Builder(requireContext())
+            .setTitle("Please use your fingerprint")
+            .setSubtitle("Authentication required")
+            .setDescription("This app has fingerprint protection to keep your password secret.")
+            .setNegativeButton(
+                "Use your password",
+                requireActivity().mainExecutor,
+                DialogInterface.OnClickListener { dialog, which ->
+
+                    //todo : use password validation
+                }).build()
+
+
+        biometricPrompt.authenticate(
+            getCancellationSignal(),
+            requireActivity().mainExecutor,
+            authenticationCallback
+        )
+
+
     }
 
     private fun checkForPasswordValidation() {
 
         //todo : check for password
     }
+
+    private val authenticationCallback: BiometricPrompt.AuthenticationCallback
+        get() = @RequiresApi(Build.VERSION_CODES.P)
+        object : BiometricPrompt.AuthenticationCallback() {
+
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                super.onAuthenticationError(errorCode, errString)
+
+                showToast(requireContext(), "Authentication Failed")
+            }
+
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
+                super.onAuthenticationSucceeded(result)
+
+                var decryptedPassword: String? = ""
+
+                decryptedPassword = try {
+                    EncryptData().decryptAES(
+                        passwrd?.password,
+                        appSetting?.appPassword
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    ""
+                }
+
+                when (buttonAction) {
+
+                    getString(R.string.onCopyBtnClick) -> {
+
+                        copyToClipBoard(
+                            requireActivity(),
+                            decryptedPassword!!
+                        )
+                    }
+
+                    getString(R.string.onItemClick) -> {
+
+                        //todo : onItemClick
+                    }
+
+                    getString(R.string.onSeePasswordBtnClick) -> {
+
+
+                    }
+                    getString(R.string.onDeleteBtnClick) -> {
+
+                    }
+                    getString(R.string.onEditClick) -> {
+
+
+                    }
+                }
+
+            }
+        }
+
 
     private fun checkBiometricSupport(): Boolean {
 
@@ -274,23 +373,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         return requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
     }
 
-    private val authenticationCallback: BiometricPrompt.AuthenticationCallback
-        get() = @RequiresApi(Build.VERSION_CODES.P)
-        object : BiometricPrompt.AuthenticationCallback() {
-
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
-                super.onAuthenticationError(errorCode, errString)
-
-                showToast(requireContext(), "Authentication Failed")
-            }
-
-            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
-                super.onAuthenticationSucceeded(result)
-
-                //todo : password succeed
-            }
-        }
-
     private fun getCancellationSignal(): CancellationSignal {
 
         cancellationSignal = CancellationSignal()
@@ -302,7 +384,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         return cancellationSignal as CancellationSignal
     }
-
 
     override fun onResume() {
         super.onResume()

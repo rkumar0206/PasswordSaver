@@ -43,4 +43,9 @@
     <string name="mode">Mode</string>
     <string name="log_in">Log In</string>
     <string name="addbutton">addButton</string>
+    <string name="onItemClick">onIemClick</string>
+    <string name="onCopyBtnClick">onCopyButtonClick</string>
+    <string name="onSeePasswordBtnClick">onSeePasswordBtnClick</string>
+    <string name="onDeleteBtnClick">onDeleteButtonClick</string>
+    <string name="onEditClick">onEditClick</string>
 </resources>
