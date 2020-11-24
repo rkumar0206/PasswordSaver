@@ -12,7 +12,9 @@ import android.os.CancellationSignal
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.SearchView
+import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
@@ -20,6 +22,10 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.customview.customView
+import com.afollestad.materialdialogs.customview.getCustomView
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
@@ -57,7 +63,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     private var cancellationSignal: CancellationSignal? = null
 
-    private var buttonAction: String = ""
     private var passwrd: Password? = Password()
 
     override fun onCreateView(
@@ -192,13 +197,17 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
     override fun onItemClickListener(password: Password?) {
 
         passwrd = password
-        buttonAction = getString(R.string.onItemClick)
 
-        val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
-            convertPasswordToJson(password)
-        )
+        if (appSetting?.isFingerprintEnabled == getString(R.string.t)) {
 
-        findNavController().navigate(action)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+
+                checkForFingerPrintValidation()
+            }
+        } else {
+
+            checkForPasswordValidation()
+        }
     }
 
     override fun onSyncBtnClickListener(password: Password?) {
@@ -217,47 +226,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
             showToast(requireContext(), "Already synced")
         }
-    }
-
-    override fun onCopyBtnClickListener(password: Password?) {
-
-        passwrd = password
-        buttonAction = getString(R.string.onCopyBtnClick)
-
-        //todo: copy password
-    }
-
-    override fun onSeePasswordBtnClickListener(password: Password?) {
-
-        passwrd = password
-        buttonAction = getString(R.string.onSeePasswordBtnClick)
-        //todo: see password
-    }
-
-    override fun onDeleteClick(password: Password?) {
-
-        passwrd = password
-        buttonAction = getString(R.string.onDeleteBtnClick)
-        //todo: delete password
-    }
-
-    override fun onEditClick(password: Password?) {
-
-        passwrd = password
-        buttonAction = getString(R.string.onEditClick)
-
-        val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
-            convertPasswordToJson(password)
-        )
-
-        findNavController().navigate(action)
-    }
-
-    override fun onCopyMenuClick(password: Password?) {
-
-        passwrd = password
-        buttonAction = getString(R.string.onCopyBtnClick)
-        //todo: copy password
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
@@ -283,8 +251,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             requireActivity().mainExecutor,
             authenticationCallback
         )
-
-
     }
 
     private fun checkForPasswordValidation() {
@@ -317,36 +283,68 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                     ""
                 }
 
-                when (buttonAction) {
+                /**
+                 * showing password information in bottomSheet
+                 */
 
-                    getString(R.string.onCopyBtnClick) -> {
+                MaterialDialog(requireContext(), BottomSheet()).show {
 
-                        copyToClipBoard(
-                            requireActivity(),
-                            decryptedPassword!!
+                    title(text = "Your Password")
+                    customView(
+                        R.layout.show_password_bottomsheet_layout,
+                        scrollable = true
+                    )
+
+                    setCustomViewOfBottomSheet(getCustomView(), decryptedPassword)
+
+                    getCustomView().findViewById<ImageButton>(R.id.editBtn).setOnClickListener {
+
+                        val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
+                            convertPasswordToJson(passwrd)
                         )
+
+                        findNavController().navigate(action)
                     }
 
-                    getString(R.string.onItemClick) -> {
+                    getCustomView().findViewById<ImageButton>(R.id.deleteBtn).setOnClickListener {
 
-                        //todo : onItemClick
+                        //todo : delete password from database
                     }
 
-                    getString(R.string.onSeePasswordBtnClick) -> {
+                    getCustomView().findViewById<ImageButton>(R.id.siteNameCopyBtn)
+                        .setOnClickListener {
 
+                            copyToClipBoard(requireActivity(), passwrd?.siteName.toString())
+                        }
 
-                    }
-                    getString(R.string.onDeleteBtnClick) -> {
+                    getCustomView().findViewById<ImageButton>(R.id.userNameCopyBtn)
+                        .setOnClickListener {
 
-                    }
-                    getString(R.string.onEditClick) -> {
+                            copyToClipBoard(requireActivity(), passwrd?.userName.toString())
+                        }
+                    getCustomView().findViewById<ImageButton>(R.id.passwordCopyBtn)
+                        .setOnClickListener {
 
-
-                    }
+                            copyToClipBoard(requireActivity(), decryptedPassword.toString())
+                        }
                 }
-
             }
         }
+
+    private fun setCustomViewOfBottomSheet(customView: View, decryptedPassword: String?) {
+
+        customView.findViewById<TextView>(R.id.sitenameTV).text = if (passwrd?.siteName == "") {
+
+            "No site name"
+        } else {
+
+            passwrd?.siteName
+        }
+
+        customView.findViewById<TextView>(R.id.usernameTV).text = passwrd?.userName
+
+        customView.findViewById<TextView>(R.id.sitenameTV).text = decryptedPassword
+    }
 
 
     private fun checkBiometricSupport(): Boolean {
