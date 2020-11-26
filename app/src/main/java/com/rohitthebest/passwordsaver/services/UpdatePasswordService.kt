@@ -9,7 +9,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.UPDATE_PASSWORD_SERVICE_MESSAGE
-import com.rohitthebest.passwordsaver.util.Functions.Companion.convertFromJsonToPassword
+import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertFromJsonToPassword
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +37,7 @@ class UpdatePasswordService : Service() {
 
         val docRef = FirebaseFirestore.getInstance()
             .collection(getString(R.string.savedPasswords))
-            .document(password?.key!!)
+            .document(password.key!!)
 
 
         val map: MutableMap<String, Any?> = HashMap()

@@ -42,8 +42,10 @@ import com.rohitthebest.passwordsaver.util.Functions.Companion.show
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showNoInternetMessage
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.util.Functions.Companion.toStringM
+import dagger.hilt.android.AndroidEntryPoint
 import kotlin.random.Random
 
+@AndroidEntryPoint
 class AppSetupFragment : Fragment(), View.OnClickListener,
     RadioGroup.OnCheckedChangeListener {
 
@@ -61,7 +63,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         _binding = FragmentAppSetupBinding.inflate(inflater, container, false)
         return binding.root
@@ -149,6 +151,8 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
         binding.nextBtn.setOnClickListener(this)
         binding.include.modeRG.setOnClickListener(this)
         binding.include.signInBtn.setOnClickListener(this)
+        binding.include.modeRG.setOnCheckedChangeListener(this)
+        binding.nextBtn.setOnClickListener(this)
         //binding.include.fingerPrintCB.setOnCheckedChangeListener(this)
     }
 
@@ -161,6 +165,9 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                 if (validateForm()) {
 
                     saveAppSettingToDatabase()
+                } else {
+
+                    showToast(requireContext(), "Something wrong")
                 }
             }
 
@@ -218,23 +225,31 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
             //upload to firestore as well as local database
 
-            uploadDocumentToFireStore(
-                requireContext(),
-                convertAppSettingToJson(appSetting)!!,
-                getString(R.string.appSetting),
-                appSetting.key
-            )
+            if (isInternetAvailable(requireContext())) {
+                uploadDocumentToFireStore(
+                    requireContext(),
+                    convertAppSettingToJson(appSetting)!!,
+                    getString(R.string.appSetting),
+                    appSetting.key
+                )
 
-            appSettingViewModel.insert(appSetting)
-            requireActivity().onBackPressed()
+                insertToLocalDatabase(appSetting)
+
+            } else {
+                showNoInternetMessage(requireContext())
+            }
         } else {
 
             //saving only to local database
-
-            appSettingViewModel.insert(appSetting)
-            requireActivity().onBackPressed()
+            insertToLocalDatabase(appSetting)
         }
 
+    }
+
+    private fun insertToLocalDatabase(appSetting: AppSetting) {
+
+        appSettingViewModel.insert(appSetting)
+        findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
     }
 
     private fun validateForm(): Boolean {
@@ -276,9 +291,17 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             return false
         }
 
+        if ((binding.include.confirmPasswordET.editText?.text.toString().trim() !=
+                    binding.include.passwordET.editText?.text.toString().trim())
+        ) {
+
+            binding.include.confirmPasswordET.error = "It doesn't match with the password!!!"
+            return false
+        }
+
         return binding.include.passwordET.error == null
                 && binding.include.confirmPasswordET.error == null
-                && (binding.include.confirmPasswordET.editText?.text.toString().trim() !=
+                && (binding.include.confirmPasswordET.editText?.text.toString().trim() ==
                 binding.include.passwordET.editText?.text.toString().trim())
 
     }

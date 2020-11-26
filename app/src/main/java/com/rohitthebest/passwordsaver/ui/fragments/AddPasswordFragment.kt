@@ -36,6 +36,8 @@ import kotlin.random.Random
 @AndroidEntryPoint
 class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnClickListener {
 
+    private val TAG = "AddPasswordFragment"
+
     private val appSettingViewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
 
@@ -51,7 +53,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         _binding = FragmentAddPasswordBinding.inflate(inflater, container, false)
         return binding.root
@@ -61,8 +63,6 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
         super.onViewCreated(view, savedInstanceState)
 
         getAppSetting()
-
-        getMessage()
 
         initListeners()
         textWatcher()
@@ -101,6 +101,8 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             appSettingViewModel.getAppSetting().observe(viewLifecycleOwner, Observer {
 
                 appSetting = it
+
+                getMessage()
             })
         } catch (e: Exception) {
             e.printStackTrace()
@@ -115,6 +117,16 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
             binding.userNameET.editText?.setText(it.userName)
             binding.siteNameET.editText?.setText(it.siteName)
+
+            Log.i(TAG, "updateUI: ${it.password}")
+            Log.i(
+                TAG, "updateUI: decrypted password : ${
+                    EncryptData().decryptAES(
+                        it.password,
+                        appSetting?.appPassword
+                    )
+                }"
+            )
             try {
                 binding.passwordET.editText?.setText(
                     EncryptData().decryptAES(
@@ -177,6 +189,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             } else {
                 ""
             }
+            mode = appSetting?.mode!!
             userName = binding.userNameET.editText?.text.toString().trim()
             this.password = encryptedPassword
             uid = ""

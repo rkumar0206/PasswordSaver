@@ -6,42 +6,67 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.Password
-import com.rohitthebest.passwordsaver.databinding.AdapterShowSavedPasswordBinding
+import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
+import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
+import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
+import com.rohitthebest.passwordsaver.util.Functions.Companion.show
+import kotlinx.android.synthetic.main.adapter_show_saved_password.view.*
 
-class SavedPasswordRVAdapter : ListAdapter<Password,
-        SavedPasswordRVAdapter.SavedPasswordViewHolder>(DiffUtilCallBack()) {
+class SavedPasswordRVAdapter :
+    ListAdapter<Password, SavedPasswordRVAdapter.ShowPasswordViewHolder>(DiffUtilCallback()) {
 
     private var mListener: OnClickListener? = null
 
-    inner class SavedPasswordViewHolder(private val itemBinding: AdapterShowSavedPasswordBinding) :
-        RecyclerView.ViewHolder(itemBinding.root), View.OnClickListener {
+    inner class ShowPasswordViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView),
+        View.OnClickListener {
 
         fun setData(password: Password?) {
 
-            itemBinding.apply {
+            password?.let {
 
-                siteNameTV.text = if (password?.siteName != "") {
+                itemView.apply {
 
-                    password?.siteName
-                } else {
-                    "Not added"
+                    siteNameTV.text = if (it.siteName != "") {
+
+                        it.siteName
+                    } else {
+                        "Not added"
+                    }
+                    userIdTV.text = it.userName
+
+                    if (it.mode == OFFLINE) {
+
+                        adapterSyncBtn.hide()
+                    } else {
+
+                        adapterSyncBtn.show()
+
+                        if (it.isSynced == NOT_SYNCED) {
+
+                            adapterSyncBtn.setImageResource(R.drawable.ic_baseline_sync_disabled_24)
+                        } else {
+
+                            adapterSyncBtn.setImageResource(R.drawable.ic_baseline_sync_24)
+                        }
+                    }
+
                 }
-                userIdTV.text = password?.userName
             }
         }
 
         init {
 
-            itemBinding.adapterSavedPasswordCV.setOnClickListener(this)
-            itemBinding.adapterSyncBtn.setOnClickListener(this)
+            itemView.setOnClickListener(this)
+            itemView.adapterSyncBtn.setOnClickListener(this)
         }
 
         override fun onClick(v: View?) {
 
             when (v?.id) {
 
-                itemBinding.adapterSavedPasswordCV.id -> {
+                itemView.id -> {
 
                     if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
 
@@ -49,7 +74,7 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
                     }
                 }
 
-                itemBinding.adapterSyncBtn.id -> {
+                itemView.adapterSyncBtn.id -> {
 
                     if (absoluteAdapterPosition != RecyclerView.NO_POSITION && mListener != null) {
 
@@ -60,7 +85,8 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
         }
     }
 
-    class DiffUtilCallBack : DiffUtil.ItemCallback<Password>() {
+    class DiffUtilCallback : DiffUtil.ItemCallback<Password>() {
+
         override fun areItemsTheSame(oldItem: Password, newItem: Password): Boolean {
 
             return oldItem.id == newItem.id
@@ -74,22 +100,17 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
                     oldItem.password == newItem.password &&
                     oldItem.timeStamp == newItem.timeStamp
         }
-
-
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SavedPasswordViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ShowPasswordViewHolder {
 
-        val itemBinding = AdapterShowSavedPasswordBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
+        return ShowPasswordViewHolder(
+            LayoutInflater.from(parent.context)
+                .inflate(R.layout.adapter_show_saved_password, parent, false)
         )
-
-        return SavedPasswordViewHolder(itemBinding)
     }
 
-    override fun onBindViewHolder(holder: SavedPasswordViewHolder, position: Int) {
+    override fun onBindViewHolder(holder: ShowPasswordViewHolder, position: Int) {
 
         holder.setData(getItem(position))
     }
@@ -101,7 +122,6 @@ class SavedPasswordRVAdapter : ListAdapter<Password,
     }
 
     fun setOnClickListener(listener: OnClickListener) {
-
         mListener = listener
     }
 }

@@ -1,55 +1,22 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
-import android.app.Activity
-import android.app.AlertDialog
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.RadioGroup
-import android.widget.Toast
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
-import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
-import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentSettingsBinding
-import com.rohitthebest.passwordsaver.other.Constants
-import com.rohitthebest.passwordsaver.other.Constants.APP_SETTING_SERVICE_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.DELETE_APPSETTING_SERVICE_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.DELETE_PASSWORD_SERVICE_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
-import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
-import com.rohitthebest.passwordsaver.other.Constants.ONLINE
-import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE
-import com.rohitthebest.passwordsaver.other.Constants.TARGET_FRAGMENT_REQUEST_CODE2
-import com.rohitthebest.passwordsaver.services.DeleteAppSettingAndPasswordService
-import com.rohitthebest.passwordsaver.services.UploadAppSettingsService
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
-import com.rohitthebest.passwordsaver.util.Functions.Companion.convertAppSettingToJson
-import com.rohitthebest.passwordsaver.util.Functions.Companion.convertPasswordListToJson
-import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
-import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
 
 @AndroidEntryPoint
-class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedChangeListener {
+class SettingsFragment : Fragment()/*, View.OnClickListener, RadioGroup.OnCheckedChangeListener*/ {
 
     private val TAG = "SettingsFragment"
     private val appSettingViewModel: AppSettingViewModel by viewModels()
@@ -81,544 +48,541 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        disableSaveBtn()
+        /* disableSaveBtn()
 
-        savedPasswordList = ArrayList()
+         savedPasswordList = ArrayList()
 
-        mAuth = Firebase.auth
+         mAuth = Firebase.auth
 
-        initListeners()
-        getAppSetting()
-        getPasswordList()
+         initListeners()
+         getAppSetting()
+         getPasswordList()*/
     }
 
-    private fun getAppSetting() {
+    /* private fun getAppSetting() {
 
-        try {
+         try {
 
-            appSettingViewModel.getAppSettingByID().observe(viewLifecycleOwner, Observer {
+             appSettingViewModel.getAppSetting().observe(viewLifecycleOwner, Observer {
 
 
-                if (it.isNotEmpty()) {
+                 if (it != null) {
 
-                    appSetting = it[0]
+                     appSetting = it
 
-                    updateUI()
-                }
+                     updateUI()
+                 }
 
-            })
+             })
 
-        } catch (e: Exception) {
+         } catch (e: Exception) {
 
-            e.printStackTrace()
-        }
-    }
+             e.printStackTrace()
+         }
+     }
 
-    private fun getPasswordList() {
+     private fun getPasswordList() {
 
-        try {
+         try {
 
-            passwordViewModel.getAllPasswordsList().observe(viewLifecycleOwner, Observer {
+             passwordViewModel.getAllPasswordsList().observe(viewLifecycleOwner, Observer {
 
-                if (it.isNotEmpty()) {
+                 if (it.isNotEmpty()) {
 
-                    it.forEach { password ->
+                     it.forEach { password ->
 
-                        savedPasswordList?.add(password)
-                    }
-                }
+                         savedPasswordList?.add(password)
+                     }
+                 }
 
-                enableSaveBtn()
-            })
+                 enableSaveBtn()
+             })
 
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
+         } catch (e: Exception) {
+             e.printStackTrace()
+         }
+     }
 
+     private fun updateUI() {
 
-    private fun updateUI() {
+         appSetting?.let {
 
-        appSetting?.let {
+             if (it.mode == ONLINE) {
 
-            if (it.mode == ONLINE) {
+                 isOnlineModeInitially = true
+                 binding.modeChangeRG.check(binding.onlineModeRB.id)
+             } else {
+                 isOnlineModeInitially = false
+                 binding.modeChangeRG.check(binding.offlineModeRB.id)
+             }
 
-                isOnlineModeInitially = true
-                binding.modeChangeRG.check(binding.onlineModeRB.id)
-            } else {
-                isOnlineModeInitially = false
-                binding.modeChangeRG.check(binding.offlineModeRB.id)
-            }
+             binding.copyCB.isChecked = it.isPasswordRequiredForCopy == getString(R.string.t)
 
-            binding.copyCB.isChecked = it.isPasswordRequiredForCopy == getString(R.string.t)
+             binding.visibilityCB.isChecked = it.isPasswordRequiredForVisibility == getString(R.string.t)
+         }
 
-            binding.visibilityCB.isChecked = it.isPasswordRequiredForVisibility == getString(R.string.t)
-        }
+         radioButtonChangeListener = true
+     }
 
-        radioButtonChangeListener = true
-    }
+     private fun initListeners() {
 
-    private fun initListeners() {
+         binding.backBtn.setOnClickListener(this)
+         binding.saveBtn.setOnClickListener(this)
+         binding.changePasswordIB.setOnClickListener(this)
+         binding.changePasswordTV.setOnClickListener(this)
+         binding.modeChangeRG.setOnCheckedChangeListener(this)
+     }
 
-        binding.backBtn.setOnClickListener(this)
-        binding.saveBtn.setOnClickListener(this)
-        binding.changePasswordIB.setOnClickListener(this)
-        binding.changePasswordTV.setOnClickListener(this)
-        binding.modeChangeRG.setOnCheckedChangeListener(this)
-    }
+     override fun onCheckedChanged(radioGroup: RadioGroup?, checkedId: Int) {
 
+         if (checkedId == binding.offlineModeRB.id) {
 
-    override fun onCheckedChanged(radioGroup: RadioGroup?, checkedId: Int) {
+             if (radioButtonChangeListener) {
 
-        if (checkedId == binding.offlineModeRB.id) {
+                 val message =
+                     "${getString(R.string.offline_text)}\n\n2 .If you choose offline mode all " +
+                             "the passwords saved on cloud will" +
+                             " be permanently deleted and cannot be retrieved again."
 
-            if (radioButtonChangeListener) {
+                 AlertDialog.Builder(requireContext())
+                     .setMessage(message)
+                     .setPositiveButton("Ok") { dialogInterface, _ ->
+                         dialogInterface.dismiss()
+                     }
+                     .create()
+                     .show()
 
-                val message =
-                    "${getString(R.string.offline_text)}\n\n2 .If you choose offline mode all " +
-                            "the passwords saved on cloud will" +
-                            " be permanently deleted and cannot be retrieved again."
+             }
+         } else {
 
-                AlertDialog.Builder(requireContext())
-                    .setMessage(message)
-                    .setPositiveButton("Ok") { dialogInterface, _ ->
-                        dialogInterface.dismiss()
-                    }
-                    .create()
-                    .show()
+             if (radioButtonChangeListener && appSetting?.uid == "") {
+                 val message =
+                     "${getString(R.string.online_text)}\n\nIn Order to save your data to" +
+                             " cloud you need to signIn with your Google Account."
 
-            }
-        } else {
+                 AlertDialog.Builder(requireContext())
+                     .setMessage(message)
+                     .setPositiveButton("SignIn") { dialogInterface, _ ->
 
-            if (radioButtonChangeListener && appSetting?.uid == "") {
-                val message =
-                    "${getString(R.string.online_text)}\n\nIn Order to save your data to" +
-                            " cloud you need to signIn with your Google Account."
+                         if (isInternetAvailable(requireContext())) {
+                             disableSaveBtn()
+                             signIn()
+                         } else {
+                             showToast(requireContext(), NO_INTERNET_MESSAGE)
+                         }
+                         dialogInterface.dismiss()
+                     }.setOnDismissListener {
 
-                AlertDialog.Builder(requireContext())
-                    .setMessage(message)
-                    .setPositiveButton("SignIn") { dialogInterface, _ ->
+                         if (mAuth.currentUser == null) {
+                             radioButtonChangeListener = false
+                             binding.modeChangeRG.check(binding.offlineModeRB.id)
+                         }
 
-                        if (isInternetAvailable(requireContext())) {
-                            disableSaveBtn()
-                            signIn()
-                        } else {
-                            showToast(requireContext(), NO_INTERNET_MESSAGE)
-                        }
-                        dialogInterface.dismiss()
-                    }.setOnDismissListener {
+                         GlobalScope.launch {
 
-                        if (mAuth.currentUser == null) {
-                            radioButtonChangeListener = false
-                            binding.modeChangeRG.check(binding.offlineModeRB.id)
-                        }
+                             delay(200)
 
-                        GlobalScope.launch {
+                             withContext(Dispatchers.Main) {
 
-                            delay(200)
+                                 radioButtonChangeListener = true
+                             }
+                         }
+                     }
+                     .create()
+                     .show()
+             }
+         }
 
-                            withContext(Dispatchers.Main) {
+     }
 
-                                radioButtonChangeListener = true
-                            }
-                        }
-                    }
-                    .create()
-                    .show()
-            }
-        }
+     override fun onClick(v: View?) {
 
-    }
+         when (v?.id) {
 
+             binding.saveBtn.id -> {
 
-    override fun onClick(v: View?) {
+                 //Ask For Password
+                 val dialogFragment = CheckPasswordInSettingFragment().getInstance()
+                 dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE2)
+                 parentFragmentManager.let {
+                     dialogFragment.show(
+                         it,
+                         "CheckPasswordInSettingFragment"
+                     )
+                 }
 
-        when (v?.id) {
+             }
 
-            binding.saveBtn.id -> {
+             binding.backBtn.id -> {
+                 requireActivity().onBackPressed()
+             }
+         }
 
-                //Ask For Password
-                val dialogFragment = CheckPasswordInSettingFragment().getInstance()
-                dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE2)
-                parentFragmentManager.let {
-                    dialogFragment.show(
-                        it,
-                        "CheckPasswordInSettingFragment"
-                    )
-                }
+         if (v?.id == binding.changePasswordIB.id || v?.id == binding.changePasswordTV.id) {
 
-            }
+             openDialog()
+         }
+     }
 
-            binding.backBtn.id -> {
-                requireActivity().onBackPressed()
-            }
-        }
+     private fun openDialog() {
 
-        if (v?.id == binding.changePasswordIB.id || v?.id == binding.changePasswordTV.id) {
+         val dialogFragment = ChangeAppPasswordDialog().getInstance()
+         dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE)
 
-            openDialog()
-        }
-    }
+         parentFragmentManager.let { dialogFragment.show(it, "ChangeAppPasswordDialog") }
+     }
 
-    private fun openDialog() {
+     private fun updateChanges() {
 
-        val dialogFragment = ChangeAppPasswordDialog().getInstance()
-        dialogFragment.setTargetFragment(this, TARGET_FRAGMENT_REQUEST_CODE)
+         appSetting?.let {
 
-        parentFragmentManager.let { dialogFragment.show(it, "ChangeAppPasswordDialog") }
-    }
+             it.isPasswordRequiredForCopy = if (binding.copyCB.isChecked) {
 
-    private fun updateChanges() {
+                 getString(R.string.t)
+             } else {
 
-        appSetting?.let {
+                 getString(R.string.f)
+             }
 
-            it.isPasswordRequiredForCopy = if (binding.copyCB.isChecked) {
+             it.isPasswordRequiredForVisibility = if (binding.visibilityCB.isChecked) {
 
-                getString(R.string.t)
-            } else {
+                 getString(R.string.t)
+             } else {
 
-                getString(R.string.f)
-            }
+                 getString(R.string.f)
+             }
+             if (binding.modeChangeRG.checkedRadioButtonId == binding.offlineModeRB.id) {
 
-            it.isPasswordRequiredForVisibility = if (binding.visibilityCB.isChecked) {
+                 if (isOnlineModeInitially) {
 
-                getString(R.string.t)
-            } else {
+                     if (isInternetAvailable(requireContext())) {
 
-                getString(R.string.f)
-            }
-            if (binding.modeChangeRG.checkedRadioButtonId == binding.offlineModeRB.id) {
+                         deleteDataFromFirestore(it)
+                     } else {
+                         showToast(requireContext(), NO_INTERNET_MESSAGE)
+                     }
+                 } else {
 
-                if (isOnlineModeInitially) {
+                     appSettingViewModel.insert(it)
+                     requireActivity().onBackPressed()
+                 }
 
-                    if (isInternetAvailable(requireContext())) {
+             } else {
+                 if (isInternetAvailable(requireContext())) {
 
-                        deleteDataFromFirestore(it)
-                    } else {
-                        showToast(requireContext(), NO_INTERNET_MESSAGE)
-                    }
-                } else {
+                     if (!isOnlineModeInitially) {
 
-                    appSettingViewModel.insert(it)
-                    requireActivity().onBackPressed()
-                }
+                         if (savedPasswordList?.isNotEmpty()!!) {
+                             savedPasswordList?.forEach { password ->
 
-            } else {
-                if (isInternetAvailable(requireContext())) {
+                                 password.isSynced = NOT_SYNCED
+                                 password.uid = mAuth.currentUser?.uid
+                                 passwordViewModel.insert(password)
+                             }
+                         }
 
-                    if (!isOnlineModeInitially) {
+                         uploadAppSettingToFirestore(it)
+                     } else {
 
-                        if (savedPasswordList?.isNotEmpty()!!) {
-                            savedPasswordList?.forEach { password ->
+                         uploadAppSettingToFirestore(it)
+                     }
+                 } else {
 
-                                password.isSynced = NOT_SYNCED
-                                password.uid = mAuth.currentUser?.uid
-                                passwordViewModel.insert(password)
-                            }
-                        }
+                     showToast(requireContext(), NO_INTERNET_MESSAGE)
+                 }
+             }
+         }
 
-                        uploadAppSettingToFirestore(it)
-                    } else {
+     }
 
-                        uploadAppSettingToFirestore(it)
-                    }
-                } else {
+     private fun deleteDataFromFirestore(it: AppSetting) {
 
-                    showToast(requireContext(), NO_INTERNET_MESSAGE)
-                }
-            }
-        }
+         if (savedPasswordList?.isNotEmpty()!!) {
+             savedPasswordList?.forEach { password ->
 
-    }
+                 password.uid = ""
+                 passwordViewModel.insert(password)
+             }
+         }
 
-    private fun deleteDataFromFirestore(it: AppSetting) {
+         val appSettingMessage = it.uid
 
-        if (savedPasswordList?.isNotEmpty()!!) {
-            savedPasswordList?.forEach { password ->
+         val passwordListMessage = if (savedPasswordList?.isNotEmpty()!!) {
 
-                password.uid = ""
-                passwordViewModel.insert(password)
-            }
-        }
+             convertPasswordListToJson(savedPasswordList)
+         } else {
+             ""
+         }
 
-        val appSettingMessage = it.uid
+         Log.d(TAG, "$appSettingMessage")
+         Log.d(TAG, "$passwordListMessage")
 
-        val passwordListMessage = if (savedPasswordList?.isNotEmpty()!!) {
+         val foreGroundServiceIntent =
+             Intent(requireContext(), DeleteAppSettingAndPasswordService::class.java)
+         foreGroundServiceIntent.putExtra(
+             DELETE_APPSETTING_SERVICE_MESSAGE,
+             appSettingMessage
+         )
+         foreGroundServiceIntent.putExtra(
+             DELETE_PASSWORD_SERVICE_MESSAGE,
+             passwordListMessage
+         )
 
-            convertPasswordListToJson(savedPasswordList)
-        } else {
-            ""
-        }
+         ContextCompat.startForegroundService(
+             requireContext(),
+             foreGroundServiceIntent
+         )
 
-        Log.d(TAG, "$appSettingMessage")
-        Log.d(TAG, "$passwordListMessage")
 
-        val foreGroundServiceIntent =
-            Intent(requireContext(), DeleteAppSettingAndPasswordService::class.java)
-        foreGroundServiceIntent.putExtra(
-            DELETE_APPSETTING_SERVICE_MESSAGE,
-            appSettingMessage
-        )
-        foreGroundServiceIntent.putExtra(
-            DELETE_PASSWORD_SERVICE_MESSAGE,
-            passwordListMessage
-        )
+         it.uid = ""
+         it.mode = OFFLINE
+         appSettingViewModel.insert(it)
 
-        ContextCompat.startForegroundService(
-            requireContext(),
-            foreGroundServiceIntent
-        )
+         requireActivity().onBackPressed()
+     }
 
+     private fun uploadAppSettingToFirestore(it: AppSetting) {
 
-        it.uid = ""
-        it.mode = OFFLINE
-        appSettingViewModel.insert(it)
+         it.uid = mAuth.currentUser?.uid
+         it.mode = ONLINE
 
-        requireActivity().onBackPressed()
-    }
+         appSettingViewModel.insert(it)
 
-    private fun uploadAppSettingToFirestore(it: AppSetting) {
+         val foreGroundServiceIntent =
+             Intent(requireContext(), UploadAppSettingsService::class.java)
+         foreGroundServiceIntent.putExtra(
+             APP_SETTING_SERVICE_MESSAGE,
+             convertAppSettingToJson(it)
+         )
 
-        it.uid = mAuth.currentUser?.uid
-        it.mode = ONLINE
+         ContextCompat.startForegroundService(
+             requireContext(),
+             foreGroundServiceIntent
+         )
 
-        appSettingViewModel.insert(it)
+         requireActivity().onBackPressed()
+     }
 
-        val foreGroundServiceIntent =
-            Intent(requireContext(), UploadAppSettingsService::class.java)
-        foreGroundServiceIntent.putExtra(
-            APP_SETTING_SERVICE_MESSAGE,
-            convertAppSettingToJson(it)
-        )
+     // [START signin]
+     private fun signIn() {
+         val signInIntent = googleSignInClient.signInIntent
+         startActivityForResult(
+             signInIntent,
+             Constants.RC_SIGN_IN
+         )
+     }
+     // [END signin]
 
-        ContextCompat.startForegroundService(
-            requireContext(),
-            foreGroundServiceIntent
-        )
 
-        requireActivity().onBackPressed()
-    }
+     override fun onActivityCreated(savedInstanceState: Bundle?) {
+         super.onActivityCreated(savedInstanceState)
+         mAuth = Firebase.auth
 
-    // [START signin]
-    private fun signIn() {
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(
-            signInIntent,
-            Constants.RC_SIGN_IN
-        )
-    }
-    // [END signin]
+         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+             .requestIdToken(getString(R.string.default_web_client_id))
+             .requestEmail()
+             .build()
 
+         googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
+     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        mAuth = Firebase.auth
+     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+         super.onActivityResult(requestCode, resultCode, data)
 
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
+         // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
+         if (requestCode == Constants.RC_SIGN_IN) {
+             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
+             try {
+                 // Google Sign In was successful, authenticate with Firebase
+                 val account = task.getResult(ApiException::class.java)!!
+                 Log.d(TAG, "firebaseAuthWithGoogle:" + account.id)
 
-        googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
-    }
+                 firebaseAuthWithGoogle(account.idToken!!)
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
+             } catch (e: ApiException) {
+                 // Google Sign In failed, update UI appropriately
+                 Log.w(TAG, "Google sign in failed", e)
+                 // [START_EXCLUDE]
+                 showToast(requireContext(), "SignIn Un-successful")
+             }
+         }
 
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
-        if (requestCode == Constants.RC_SIGN_IN) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            try {
-                // Google Sign In was successful, authenticate with Firebase
-                val account = task.getResult(ApiException::class.java)!!
-                Log.d(TAG, "firebaseAuthWithGoogle:" + account.id)
+         if (resultCode != Activity.RESULT_OK) {
 
-                firebaseAuthWithGoogle(account.idToken!!)
+             return
+         }
 
-            } catch (e: ApiException) {
-                // Google Sign In failed, update UI appropriately
-                Log.w(TAG, "Google sign in failed", e)
-                // [START_EXCLUDE]
-                showToast(requireContext(), "SignIn Un-successful")
-            }
-        }
+         if (requestCode == TARGET_FRAGMENT_REQUEST_CODE) {
 
-        if (resultCode != Activity.RESULT_OK) {
+             data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
 
-            return
-        }
+                 if (it.isNotEmpty()) {
+                     //No need to encrypt the incoming message as it is already encrypted
+                     changePassword(newPassword = it)
+                     //showToast(requireContext(), it)
+                 }
+             }
+         }
 
-        if (requestCode == TARGET_FRAGMENT_REQUEST_CODE) {
+         if (requestCode == TARGET_FRAGMENT_REQUEST_CODE2) {
 
-            data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
+             data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
 
-                if (it.isNotEmpty()) {
-                    //No need to encrypt the incoming message as it is already encrypted
-                    changePassword(newPassword = it)
-                    //showToast(requireContext(), it)
-                }
-            }
-        }
+                 data.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
 
-        if (requestCode == TARGET_FRAGMENT_REQUEST_CODE2) {
+                     if (it != getString(R.string.f)) {
 
-            data?.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
+                         try {
+                             updateChanges()
 
-                data.getStringExtra(TARGET_FRAGMENT_MESSAGE)?.let {
+                         } catch (e: Exception) {
+                             e.printStackTrace()
+                         }
+                     } else {
+                         showToast(requireContext(), "Password does not match!!!")
+                     }
+                 }
+             }
+         }
+     }
 
-                    if (it != getString(R.string.f)) {
+     private fun changePassword(newPassword: String) {
 
-                        try {
-                            updateChanges()
+         appSetting?.let {
 
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
-                    } else {
-                        showToast(requireContext(), "Password does not match!!!")
-                    }
-                }
-            }
-        }
-    }
+             if (it.mode == ONLINE) {
 
-    private fun changePassword(newPassword: String) {
+                 it.appPassword = newPassword
 
-        appSetting?.let {
+                 if (isInternetAvailable(requireContext())) {
 
-            if (it.mode == ONLINE) {
+                     val foreGroundServiceIntent =
+                         Intent(requireContext(), UploadAppSettingsService::class.java)
+                     foreGroundServiceIntent.putExtra(
+                         APP_SETTING_SERVICE_MESSAGE,
+                         convertAppSettingToJson(it)
+                     )
 
-                it.appPassword = newPassword
+                     ContextCompat.startForegroundService(
+                         requireContext(),
+                         foreGroundServiceIntent
+                     )
 
-                if (isInternetAvailable(requireContext())) {
+                     appSettingViewModel.insert(it)
+                     showToast(requireContext(), "Password Changed")
+                 } else {
 
-                    val foreGroundServiceIntent =
-                        Intent(requireContext(), UploadAppSettingsService::class.java)
-                    foreGroundServiceIntent.putExtra(
-                        APP_SETTING_SERVICE_MESSAGE,
-                        convertAppSettingToJson(it)
-                    )
+                     showToast(requireContext(), NO_INTERNET_MESSAGE)
+                     showToast(requireContext(), "Cannot change the password!!!", Toast.LENGTH_LONG)
+                 }
 
-                    ContextCompat.startForegroundService(
-                        requireContext(),
-                        foreGroundServiceIntent
-                    )
+             } else {
 
-                    appSettingViewModel.insert(it)
-                    showToast(requireContext(), "Password Changed")
-                } else {
+                 it.appPassword = newPassword
+                 appSettingViewModel.insert(it)
+                 showToast(requireContext(), "Password Changed")
+             }
 
-                    showToast(requireContext(), NO_INTERNET_MESSAGE)
-                    showToast(requireContext(), "Cannot change the password!!!", Toast.LENGTH_LONG)
-                }
+         }
+     }
 
-            } else {
+     fun newIntent(message: String): Intent {
 
-                it.appPassword = newPassword
-                appSettingViewModel.insert(it)
-                showToast(requireContext(), "Password Changed")
-            }
+         val intent = Intent()
+         intent.putExtra(TARGET_FRAGMENT_MESSAGE, message)
 
-        }
-    }
+         return intent
+     }
 
-    fun newIntent(message: String): Intent {
+     private fun firebaseAuthWithGoogle(idToken: String) {
 
-        val intent = Intent()
-        intent.putExtra(TARGET_FRAGMENT_MESSAGE, message)
+         showProgressBar()
 
-        return intent
-    }
+         val credential = GoogleAuthProvider.getCredential(idToken, null)
 
-    private fun firebaseAuthWithGoogle(idToken: String) {
+         mAuth.signInWithCredential(credential)
+             .addOnCompleteListener(requireActivity()) { task ->
+                 if (task.isSuccessful) {
+                     // Sign in success, update UI with the signed-in user's information
+                     Log.d(TAG, "signInWithCredential:success")
 
-        showProgressBar()
+                     showToast(requireContext(), "SignIn successful")
+                     showToast(requireContext(), "signInWithCredential:success")
 
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
+                     enableSaveBtn()
+                     radioButtonChangeListener = false
+                     binding.modeChangeRG.check(binding.onlineModeRB.id)
 
-        mAuth.signInWithCredential(credential)
-            .addOnCompleteListener(requireActivity()) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    Log.d(TAG, "signInWithCredential:success")
+                     GlobalScope.launch {
+                         delay(200)
+                         withContext(Dispatchers.Main) {
 
-                    showToast(requireContext(), "SignIn successful")
-                    showToast(requireContext(), "signInWithCredential:success")
+                             radioButtonChangeListener = true
+                         }
+                     }
 
-                    enableSaveBtn()
-                    radioButtonChangeListener = false
-                    binding.modeChangeRG.check(binding.onlineModeRB.id)
+                 } else {
+                     // If sign in fails, display a message to the user.
+                     Log.w(TAG, "signInWithCredential:failure", task.exception)
+                     showToast(requireContext(), "Authentication Failed.")
 
-                    GlobalScope.launch {
-                        delay(200)
-                        withContext(Dispatchers.Main) {
+                     radioButtonChangeListener = false
+                     binding.modeChangeRG.check(binding.offlineModeRB.id)
+                     enableSaveBtn()
+                     hideProgressBar()
 
-                            radioButtonChangeListener = true
-                        }
-                    }
+                     GlobalScope.launch {
+                         delay(200)
+                         withContext(Dispatchers.Main) {
 
-                } else {
-                    // If sign in fails, display a message to the user.
-                    Log.w(TAG, "signInWithCredential:failure", task.exception)
-                    showToast(requireContext(), "Authentication Failed.")
+                             radioButtonChangeListener = true
+                         }
+                     }
 
-                    radioButtonChangeListener = false
-                    binding.modeChangeRG.check(binding.offlineModeRB.id)
-                    enableSaveBtn()
-                    hideProgressBar()
+                 }
+                 hideProgressBar()
+             }
+     }
 
-                    GlobalScope.launch {
-                        delay(200)
-                        withContext(Dispatchers.Main) {
 
-                            radioButtonChangeListener = true
-                        }
-                    }
+     private fun showProgressBar() {
 
-                }
-                hideProgressBar()
-            }
-    }
+         try {
+             binding.progressBar.visibility = View.VISIBLE
+         } catch (e: IllegalStateException) {
+             e.printStackTrace()
+         }
+     }
 
+     private fun hideProgressBar() {
+         try {
+             binding.progressBar.visibility = View.GONE
+         } catch (e: IllegalStateException) {
+             e.printStackTrace()
+         }
+     }
 
-    private fun showProgressBar() {
+     private fun enableSaveBtn() {
 
-        try {
-            binding.progressBar.visibility = View.VISIBLE
-        } catch (e: IllegalStateException) {
-            e.printStackTrace()
-        }
-    }
+         try {
+             binding.saveBtn.isEnabled = true
+         } catch (e: IllegalStateException) {
+             e.printStackTrace()
+         }
+     }
 
-    private fun hideProgressBar() {
-        try {
-            binding.progressBar.visibility = View.GONE
-        } catch (e: IllegalStateException) {
-            e.printStackTrace()
-        }
-    }
+     private fun disableSaveBtn() {
+         try {
+             binding.saveBtn.isEnabled = false
+         } catch (e: IllegalStateException) {
+             e.printStackTrace()
+         }
+     }
 
-    private fun enableSaveBtn() {
+     override fun onDestroyView() {
+         super.onDestroyView()
 
-        try {
-            binding.saveBtn.isEnabled = true
-        } catch (e: IllegalStateException) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun disableSaveBtn() {
-        try {
-            binding.saveBtn.isEnabled = false
-        } catch (e: IllegalStateException) {
-            e.printStackTrace()
-        }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-
-        _binding = null
-    }
-
+         _binding = null
+     }
+ */
 }

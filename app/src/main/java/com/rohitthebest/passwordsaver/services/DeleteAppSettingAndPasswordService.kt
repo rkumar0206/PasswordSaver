@@ -3,19 +3,7 @@ package com.rohitthebest.passwordsaver.services
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
-import androidx.core.app.NotificationCompat
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.FirebaseFirestore
-import com.rohitthebest.passwordsaver.R
-import com.rohitthebest.passwordsaver.database.entity.Password
-import com.rohitthebest.passwordsaver.other.Constants
-import com.rohitthebest.passwordsaver.other.Constants.DELETE_APPSETTING_SERVICE_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.DELETE_PASSWORD_SERVICE_MESSAGE
-import com.rohitthebest.passwordsaver.util.Functions
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class DeleteAppSettingAndPasswordService : Service() {
@@ -24,7 +12,7 @@ class DeleteAppSettingAndPasswordService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        val messageAppSetting = intent?.getStringExtra(DELETE_APPSETTING_SERVICE_MESSAGE)
+/*        val messageAppSetting = intent?.getStringExtra(DELETE_APPSETTING_SERVICE_MESSAGE)
         val messagePassword = intent?.getStringExtra(DELETE_PASSWORD_SERVICE_MESSAGE)
 
         var passwordList: ArrayList<Password>? = ArrayList()
@@ -46,8 +34,9 @@ class DeleteAppSettingAndPasswordService : Service() {
 
         val appSettingDocRef = FirebaseFirestore.getInstance()
             .collection(getString(R.string.appSetting))
-            .document(messageAppSetting!!)
+            .document(messageAppSetting!!)*/
 
+/*
         CoroutineScope(Dispatchers.IO).launch {
 
             val flag = deleteDataFromFireStore(appSettingDocRef)
@@ -84,6 +73,7 @@ class DeleteAppSettingAndPasswordService : Service() {
                 Log.i(TAG, "App Setting Deleted from firestore")
             }
         }
+*/
 
         return START_NOT_STICKY
     }

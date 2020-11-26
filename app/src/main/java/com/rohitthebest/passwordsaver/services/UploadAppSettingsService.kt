@@ -3,21 +3,8 @@ package com.rohitthebest.passwordsaver.services
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import android.util.Log
-import androidx.core.app.NotificationCompat
 import com.google.firebase.firestore.DocumentReference
-import com.google.firebase.firestore.FirebaseFirestore
-import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
-import com.rohitthebest.passwordsaver.other.Constants.APP_SETTING_SERVICE_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.NOTIFICATION_CHANNEL_ID
-import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
-import com.rohitthebest.passwordsaver.util.Functions.Companion.convertFromJsonToAppSetting
-import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
-import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class UploadAppSettingsService : Service() {
@@ -26,7 +13,7 @@ class UploadAppSettingsService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
-        val message = intent?.getStringExtra(APP_SETTING_SERVICE_MESSAGE)
+       /* val message = intent?.getStringExtra(APP_SETTING_SERVICE_MESSAGE)
 
         val appSetting: AppSetting? = convertFromJsonToAppSetting(message)
 
@@ -42,8 +29,9 @@ class UploadAppSettingsService : Service() {
 
         val docRef = FirebaseFirestore.getInstance()
             .collection(getString(R.string.appSetting))
-            .document(appSetting?.uid!!)
+            .document(appSetting?.uid!!)*/
 
+/*
         if (isInternetAvailable(this)) {
             CoroutineScope(Dispatchers.IO).launch {
 
@@ -58,6 +46,7 @@ class UploadAppSettingsService : Service() {
             showToast(this, NO_INTERNET_MESSAGE)
             stopSelf()
         }
+*/
         return START_NOT_STICKY
     }
 
