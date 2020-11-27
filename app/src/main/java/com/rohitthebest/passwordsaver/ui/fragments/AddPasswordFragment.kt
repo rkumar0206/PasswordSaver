@@ -222,7 +222,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 //Uploading to firestore
 
-                convertPasswordToJson(password)?.let { pass ->
+                convertPasswordToJson(password).let { pass ->
 
                     uploadDocumentToFireStore(
                         requireContext(),

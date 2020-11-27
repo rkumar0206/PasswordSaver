@@ -1,7 +1,12 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
+import android.content.DialogInterface
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.hardware.biometrics.BiometricPrompt
+import android.os.Build
 import android.os.Bundle
+import android.os.CancellationSignal
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
@@ -9,6 +14,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioGroup
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -34,6 +40,7 @@ import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertAppSettingToJson
 import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.uploadDocumentToFireStore
+import com.rohitthebest.passwordsaver.util.Functions.Companion.checkBiometricSupport
 import com.rohitthebest.passwordsaver.util.Functions.Companion.getUid
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hideKeyBoard
@@ -55,6 +62,8 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
     private var _binding: FragmentAppSetupBinding? = null
     private val binding get() = _binding!!
+
+    private var flag = true
 
     private lateinit var mAuth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
@@ -85,13 +94,103 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                 if (it != null) {
 
-                    findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
+                    binding.include.fingerprintCL.show()
+                    binding.include.setupCL.hide()
+
+                    if (flag) {
+
+                        binding.appbar.hide()
+                        if (checkBiometricSupport(requireActivity())) {
+
+                            binding.include.fingerPrintAuthBtn.show()
+                            binding.include.passwordAuthBtn.hide()
+
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+
+                                checkForFingerPrintValidation()
+                            } else {
+
+                                checkForPasswordValidation()
+                            }
+                        } else {
+
+                            binding.include.fingerPrintAuthBtn.hide()
+                            binding.include.passwordAuthBtn.show()
+                            checkForPasswordValidation()
+                        }
+                    }
+
+                } else {
+
+                    binding.include.setupCL.show()
+                    binding.include.fingerprintCL.hide()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         })
 
+    }
+
+    @RequiresApi(Build.VERSION_CODES.P)
+    private fun checkForFingerPrintValidation() {
+
+        /**check for fingerprint validation**/
+
+        val biometricPrompt = BiometricPrompt.Builder(requireContext())
+            .setTitle("Please use your fingerprint")
+            .setSubtitle("Authentication required")
+            .setDescription("This app has fingerprint protection to keep your password secret.")
+            .setNegativeButton(
+                "Use your password",
+                requireActivity().mainExecutor,
+                DialogInterface.OnClickListener { dialog, which ->
+
+                    //todo : use password validation
+                }).build()
+
+
+        biometricPrompt.authenticate(
+            getCancellationSignal(),
+            requireActivity().mainExecutor,
+            authenticationCallback
+        )
+    }
+
+    private fun checkForPasswordValidation() {
+
+        //todo : check for password
+    }
+
+    private val authenticationCallback: BiometricPrompt.AuthenticationCallback
+        get() = @RequiresApi(Build.VERSION_CODES.P)
+        object : BiometricPrompt.AuthenticationCallback() {
+
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
+                super.onAuthenticationError(errorCode, errString)
+
+                showToast(requireContext(), "Authentication Failed")
+            }
+
+            override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
+                super.onAuthenticationSucceeded(result)
+
+                findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
+            }
+        }
+
+    private var cancellationSignal: CancellationSignal? = null
+
+    private fun getCancellationSignal(): CancellationSignal {
+
+        cancellationSignal = CancellationSignal()
+
+        cancellationSignal?.setOnCancelListener {
+
+            showToast(requireContext(), "Authentication was cancelled")
+        }
+
+        return cancellationSignal as CancellationSignal
     }
 
     private fun textWatcher() {
@@ -152,8 +251,18 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
         binding.include.modeRG.setOnClickListener(this)
         binding.include.signInBtn.setOnClickListener(this)
         binding.include.modeRG.setOnCheckedChangeListener(this)
+        binding.include.fingerPrintAuthBtn.setOnClickListener(this)
+        binding.include.passwordAuthBtn.setOnClickListener(this)
         binding.nextBtn.setOnClickListener(this)
         //binding.include.fingerPrintCB.setOnCheckedChangeListener(this)
+
+        if (requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
+
+            binding.include.fingerPrintCB.show()
+        } else {
+
+            binding.include.fingerPrintCB.hide()
+        }
     }
 
     override fun onClick(v: View?) {
@@ -180,6 +289,19 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                 }
             }
 
+            binding.include.fingerPrintAuthBtn.id -> {
+
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+
+                    checkForFingerPrintValidation()
+                }
+            }
+
+            binding.include.passwordAuthBtn.id -> {
+
+                checkForPasswordValidation()
+            }
+
         }
     }
 
@@ -198,13 +320,21 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             binding.include.passwordET.editText?.text.toString().trim()
         )
 
-        val isFingerPrintEnabled = if (binding.include.fingerPrintCB.isChecked) {
+        val isFingerPrintEnabled =
+            if (!requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
 
-            getString(R.string.t)
-        } else {
+                getString(R.string.f)
+            } else {
 
-            getString(R.string.f)
-        }
+                if (binding.include.fingerPrintCB.isChecked) {
+
+                    getString(R.string.t)
+                } else {
+
+                    getString(R.string.f)
+                }
+
+            }
 
         val appSetting = AppSetting(
             mode = mode,
@@ -248,8 +378,15 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
     private fun insertToLocalDatabase(appSetting: AppSetting) {
 
+        flag = false
         appSettingViewModel.insert(appSetting)
-        findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
+        if (appSetting.mode == OFFLINE && mAuth.currentUser != null) {
+
+            signOut()
+        } else {
+
+            findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
+        }
     }
 
     private fun validateForm(): Boolean {
@@ -314,18 +451,32 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                 binding.include.selectedModeTV.text = getString(R.string.offline_text)
                 binding.include.signInBtn.hide()
+                hideProgressBar()
             }
 
             binding.include.modeOnlineRB.id -> {
 
                 binding.include.selectedModeTV.text = getString(R.string.online_text)
-                binding.include.signInBtn.show()
+
+                if (mAuth.currentUser == null) {
+
+                    binding.include.signInBtn.show()
+                } else {
+
+                    showEmailTV()
+                }
             }
 
             binding.include.modeTrySignInRB.id -> {
 
                 binding.include.selectedModeTV.text = getString(R.string.trySignIn_text)
-                binding.include.signInBtn.show()
+
+                if (mAuth.currentUser == null) {
+
+                    binding.include.signInBtn.show()
+                } else {
+                    showEmailTV()
+                }
             }
         }
     }
@@ -397,6 +548,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                         Log.d(TAG, "signInWithCredential:success")
 
                         showToast(requireContext(), "SignIn successful")
+                        showEmailTV()
 
                     } else {
                         // If sign in fails, display a message to the user.
@@ -410,6 +562,49 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                     // [END_EXCLUDE]
                 }
         } catch (e: Exception) {
+        }
+    }
+
+    private fun signOut() {
+
+        try {
+
+            mAuth.signOut()
+
+            //[Google Sign Out]
+            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build()
+            val googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
+
+            googleSignInClient?.signOut()?.addOnCompleteListener {
+                Log.i(TAG, "Google signOut Successful")
+
+                try {
+
+                    findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            //showToast(requireContext(), "You are signed out")
+            Log.i(TAG, "You are signed out")
+
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun showEmailTV() {
+
+        try {
+
+            binding.include.emailTV.text = mAuth.currentUser?.email
+            binding.include.emailTV.show()
+            binding.include.signInBtn.hide()
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 

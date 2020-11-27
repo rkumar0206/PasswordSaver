@@ -1,13 +1,17 @@
 package com.rohitthebest.passwordsaver.util
 
+import android.Manifest
 import android.app.Activity
+import android.app.KeyguardManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
@@ -229,6 +233,30 @@ class Functions {
             }
 
             return d.toString()
+        }
+
+        fun checkBiometricSupport(activity: Activity): Boolean {
+
+            val keyguardManager =
+                activity.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+
+            if (!keyguardManager.isKeyguardSecure) {
+
+                showToast(activity, "Fingerprint authentication has not been enabled.")
+                return false
+            }
+
+            if (ActivityCompat.checkSelfPermission(
+                    activity,
+                    Manifest.permission.USE_BIOMETRIC
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+
+                showToast(activity, "Permission denied")
+                return false
+            }
+
+            return activity.packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
         }
     }
 }

@@ -1,15 +1,12 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.app.KeyguardManager
-import android.content.Context
 import android.content.DialogInterface
-import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.os.Bundle
 import android.os.CancellationSignal
+import android.util.Log
 import android.view.*
 import android.widget.ImageButton
 import android.widget.PopupMenu
@@ -18,7 +15,6 @@ import android.widget.TextView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.view.menu.MenuBuilder
 import androidx.appcompat.view.menu.MenuPopupHelper
-import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -52,7 +48,7 @@ import java.util.*
 class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.OnClickListener,
     View.OnClickListener, PopupMenu.OnMenuItemClickListener {
 
-    //private val TAG = "HomeFragment"
+    private val TAG = "HomeFragment"
 
     private val viewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
@@ -286,6 +282,9 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                     ""
                 }
 
+                Log.i(TAG, "onAuthenticationSucceeded: password : ${passwrd?.password}")
+                Log.i(TAG, "onAuthenticationSucceeded: decrypted password :  $decryptedPassword")
+
                 /**
                  * showing password information in bottomSheet
                  */
@@ -348,32 +347,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         customView.findViewById<TextView>(R.id.usernameTV).text = passwrd?.userName
 
-        customView.findViewById<TextView>(R.id.sitenameTV).text = decryptedPassword
-    }
-
-
-    private fun checkBiometricSupport(): Boolean {
-
-        val keyguardManager =
-            requireActivity().getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
-
-        if (!keyguardManager.isKeyguardSecure) {
-
-            showToast(requireContext(), "Fingerprint authentication has not been enabled.")
-            return false
-        }
-
-        if (ActivityCompat.checkSelfPermission(
-                requireContext(),
-                Manifest.permission.USE_BIOMETRIC
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-
-            showToast(requireContext(), "Permission denied")
-            return false
-        }
-
-        return requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
+        customView.findViewById<TextView>(R.id.passwordTV).text = decryptedPassword
     }
 
     private fun getCancellationSignal(): CancellationSignal {
@@ -388,21 +362,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         return cancellationSignal as CancellationSignal
     }
 
-    override fun onResume() {
-        super.onResume()
-
-        if (!requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
-
-            //todo : don't ask for fingerprint
-        } else {
-
-            if (checkBiometricSupport()) {
-
-
-            }
-        }
-
-    }
 
     private fun initListeners() {
 
