@@ -272,11 +272,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
                 if (encryptPassword == appSetting?.appPassword) {
 
-                    findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
+                    showPasswordInBottomSheet()
                 } else {
 
                     showToast(requireContext(), "Password doesn't match!!!")
-                    checkForPasswordValidation()
                 }
             }
         }
@@ -295,70 +294,76 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
                 super.onAuthenticationSucceeded(result)
 
-                val decryptedPassword: String?
-
-                decryptedPassword = try {
-                    EncryptData().decryptAES(
-                        passwrd?.password,
-                        appSetting?.appPassword
-                    )
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    ""
-                }
-
-                Log.i(TAG, "onAuthenticationSucceeded: password : ${passwrd?.password}")
-                Log.i(TAG, "onAuthenticationSucceeded: decrypted password :  $decryptedPassword")
-
-                /**
-                 * showing password information in bottomSheet
-                 */
-
-                MaterialDialog(requireContext(), BottomSheet()).show {
-
-                    title(text = "Your Password")
-                    customView(
-                        R.layout.show_password_bottomsheet_layout,
-                        scrollable = true
-                    )
-
-                    setCustomViewOfBottomSheet(getCustomView(), decryptedPassword)
-
-                    getCustomView().findViewById<ImageButton>(R.id.editBtn).setOnClickListener {
-
-                        val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
-                            convertPasswordToJson(passwrd)
-                        )
-
-                        findNavController().navigate(action)
-
-                        dismiss()
-                    }
-
-                    getCustomView().findViewById<ImageButton>(R.id.deleteBtn).setOnClickListener {
-
-                        //todo : delete password from database
-                    }
-
-                    getCustomView().findViewById<ImageButton>(R.id.siteNameCopyBtn)
-                        .setOnClickListener {
-
-                            copyToClipBoard(requireActivity(), passwrd?.siteName.toString())
-                        }
-
-                    getCustomView().findViewById<ImageButton>(R.id.userNameCopyBtn)
-                        .setOnClickListener {
-
-                            copyToClipBoard(requireActivity(), passwrd?.userName.toString())
-                        }
-                    getCustomView().findViewById<ImageButton>(R.id.passwordCopyBtn)
-                        .setOnClickListener {
-
-                            copyToClipBoard(requireActivity(), decryptedPassword.toString())
-                        }
-                }
+                showPasswordInBottomSheet()
             }
         }
+
+    private fun showPasswordInBottomSheet() {
+
+
+        val decryptedPassword: String?
+
+        decryptedPassword = try {
+            EncryptData().decryptAES(
+                passwrd?.password,
+                appSetting?.appPassword
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ""
+        }
+
+        Log.i(TAG, "onAuthenticationSucceeded: password : ${passwrd?.password}")
+        Log.i(TAG, "onAuthenticationSucceeded: decrypted password :  $decryptedPassword")
+
+        /**
+         * showing password information in bottomSheet
+         */
+
+        MaterialDialog(requireContext(), BottomSheet()).show {
+
+            title(text = "Your Password")
+            customView(
+                R.layout.show_password_bottomsheet_layout,
+                scrollable = true
+            )
+
+            setCustomViewOfBottomSheet(getCustomView(), decryptedPassword)
+
+            getCustomView().findViewById<ImageButton>(R.id.editBtn).setOnClickListener {
+
+                val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
+                    convertPasswordToJson(passwrd)
+                )
+
+                findNavController().navigate(action)
+
+                dismiss()
+            }
+
+            getCustomView().findViewById<ImageButton>(R.id.deleteBtn).setOnClickListener {
+
+                //todo : delete password from database
+            }
+
+            getCustomView().findViewById<ImageButton>(R.id.siteNameCopyBtn)
+                .setOnClickListener {
+
+                    copyToClipBoard(requireActivity(), passwrd?.siteName.toString())
+                }
+
+            getCustomView().findViewById<ImageButton>(R.id.userNameCopyBtn)
+                .setOnClickListener {
+
+                    copyToClipBoard(requireActivity(), passwrd?.userName.toString())
+                }
+            getCustomView().findViewById<ImageButton>(R.id.passwordCopyBtn)
+                .setOnClickListener {
+
+                    copyToClipBoard(requireActivity(), decryptedPassword.toString())
+                }
+        }
+    }
 
     private fun setCustomViewOfBottomSheet(customView: View, decryptedPassword: String?) {
 

@@ -14,7 +14,10 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.RadioGroup
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -30,6 +33,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
@@ -51,9 +55,9 @@ import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailab
 import com.rohitthebest.passwordsaver.util.Functions.Companion.show
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showNoInternetMessage
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
-import com.rohitthebest.passwordsaver.util.Functions.Companion.toStringM
 import dagger.hilt.android.AndroidEntryPoint
-import kotlin.random.Random
+import java.util.*
+import kotlin.collections.ArrayList
 
 @AndroidEntryPoint
 class AppSetupFragment : Fragment(), View.OnClickListener,
@@ -68,6 +72,9 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
     private var flag = true
     private var appSetting: AppSetting? = null
+
+    private lateinit var securityQuestionsList: List<String>
+    private var securityQuestion: String = ""
 
     private lateinit var mAuth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
@@ -85,11 +92,51 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        securityQuestionsList = ArrayList()
+
+        securityQuestionsList = resources.getStringArray(R.array.security_questions).toList()
+
+        securityQuestion = securityQuestionsList[0]
+        setUpSecurityQuestionSpinner()
+
         getAppSettingData()
         initListeners()
         textWatcher()
     }
 
+    private fun setUpSecurityQuestionSpinner() {
+
+        binding.include.securityQuestionsSpinner
+            .adapter = ArrayAdapter(
+            requireContext(),
+            R.layout.support_simple_spinner_dropdown_item,
+            securityQuestionsList
+        )
+
+        binding.include.securityQuestionsSpinner.apply {
+
+            onItemSelectedListener =
+                object : AdapterView.OnItemSelectedListener {
+
+                    override fun onNothingSelected(parent: AdapterView<*>?) {
+
+                        setSelection(0)
+                        securityQuestion = securityQuestionsList[0]
+                    }
+
+                    override fun onItemSelected(
+                        parent: AdapterView<*>?,
+                        view: View?,
+                        position: Int,
+                        id: Long
+                    ) {
+
+                        setSelection(position)
+                        securityQuestion = securityQuestionsList[position]
+                    }
+                }
+        }
+    }
 
     private fun getAppSettingData() {
 
@@ -189,6 +236,9 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                     checkForPasswordValidation()
                 }
             }
+        }.negativeButton(text = "Forgot password") {
+
+            //todo : check for security question
         }
     }
 
@@ -250,11 +300,13 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                 if (s?.trim()?.isEmpty()!!) {
 
-                    binding.include.passwordET.error = EDITTEXT_EMPTY_MESSAGE
-                } else if (binding.include.passwordET.editText?.text.toString().isNotEmpty()) {
+                    binding.include.confirmPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+                } else if (binding.include.confirmPasswordET.editText?.text.toString()
+                        .isNotEmpty()
+                ) {
 
                     if (s.toString()
-                            .trim() != binding.include.passwordET.editText?.text.toString()
+                            .trim() != binding.include.confirmPasswordET.editText?.text.toString()
                     ) {
 
                         binding.include.confirmPasswordET.error =
@@ -265,7 +317,25 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                     }
                 } else {
 
-                    binding.include.passwordET.error = null
+                    binding.include.confirmPasswordET.error = null
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+
+        })
+
+        binding.include.securityAnswerET.editText?.addTextChangedListener(object : TextWatcher {
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+                if (s?.trim()?.isEmpty()!!) {
+
+                    binding.include.securityAnswerET.error = EDITTEXT_EMPTY_MESSAGE
+                } else {
+
+                    binding.include.securityAnswerET.error = null
                 }
             }
 
@@ -304,9 +374,6 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                 if (validateForm()) {
 
                     saveAppSettingToDatabase()
-                } else {
-
-                    showToast(requireContext(), "Something wrong")
                 }
             }
 
@@ -321,7 +388,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
             binding.include.fingerPrintAuthBtn.id -> {
 
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 
                     checkForFingerPrintValidation()
                 }
@@ -350,6 +417,17 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             binding.include.passwordET.editText?.text.toString().trim()
         )
 
+        val encryptedSecurityQuestion =
+            EncryptData().encryptWithAES(
+                securityQuestion.toLowerCase(Locale.ROOT),
+                encryptedPassword
+            )!!
+
+        val encryptedSecurityAnswer = EncryptData().encryptWithAES(
+            binding.include.securityAnswerET.editText?.text.toString().trim()
+                .toLowerCase(Locale.ROOT), encryptedPassword
+        )!!
+
         val isFingerPrintEnabled =
             if (!requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
 
@@ -369,16 +447,13 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
         val appSetting = AppSetting(
             mode = mode,
             appPassword = encryptedPassword,
+            securityQuestion = encryptedSecurityQuestion,
+            securityAnswer = encryptedSecurityAnswer,
             uid = getUid(),
             isPasswordRequiredForCopy = getString(R.string.t),
             isPasswordRequiredForVisibility = getString(R.string.t),
             isFingerprintEnabled = isFingerPrintEnabled,
-            key = "${System.currentTimeMillis().toStringM(69)}_${
-                Random.nextLong(
-                    100,
-                    9223372036854775
-                ).toStringM(69)
-            }_${getUid()}"
+            key = getUid()!!
         )
 
         if (mode != OFFLINE) {
@@ -386,11 +461,12 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             //upload to firestore as well as local database
 
             if (isInternetAvailable(requireContext())) {
+
                 uploadDocumentToFireStore(
                     requireContext(),
                     convertAppSettingToJson(appSetting)!!,
                     getString(R.string.appSetting),
-                    appSetting.key
+                    getUid().toString()
                 )
 
                 insertToLocalDatabase(appSetting)
@@ -403,11 +479,11 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             //saving only to local database
             insertToLocalDatabase(appSetting)
         }
-
     }
 
     private fun insertToLocalDatabase(appSetting: AppSetting) {
 
+        isRecordsFound = true
         flag = false
         appSettingViewModel.insert(appSetting)
         if (appSetting.mode == OFFLINE && mAuth.currentUser != null) {
@@ -441,10 +517,10 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                 Snackbar.make(
                     binding.appSetupCOORL,
-                    "You are not Logged In",
-                    Snackbar.LENGTH_INDEFINITE
+                    getString(R.string.log_in),
+                    Snackbar.LENGTH_LONG
                 )
-                    .setAction(getString(R.string.log_in)) {
+                    .setAction("Log in") {
 
                         if (isInternetAvailable(requireContext())) {
                             signIn()
@@ -453,9 +529,9 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                         }
                     }
                     .show()
-            }
 
-            return false
+                return false
+            }
         }
 
         if ((binding.include.confirmPasswordET.editText?.text.toString().trim() !=
@@ -466,8 +542,15 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             return false
         }
 
+        if (binding.include.securityAnswerET.editText?.text.toString().trim().isEmpty()) {
+
+            binding.include.securityAnswerET.error = EDITTEXT_EMPTY_MESSAGE
+            return false
+        }
+
         return binding.include.passwordET.error == null
                 && binding.include.confirmPasswordET.error == null
+                && binding.include.securityAnswerET.error == null
                 && (binding.include.confirmPasswordET.editText?.text.toString().trim() ==
                 binding.include.passwordET.editText?.text.toString().trim())
 
@@ -481,6 +564,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                 binding.include.selectedModeTV.text = getString(R.string.offline_text)
                 binding.include.signInBtn.hide()
+                binding.include.emailTV.hide()
                 hideProgressBar()
             }
 
@@ -506,6 +590,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                     binding.include.signInBtn.show()
                 } else {
                     showEmailTV()
+                    getAppSettingsFromCloudDatabase()
                 }
             }
         }
@@ -579,6 +664,17 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                         showToast(requireContext(), "SignIn successful")
                         showEmailTV()
 
+                        if (binding.include.modeRG.checkedRadioButtonId == binding.include.modeTrySignInRB.id) {
+
+                            showProgressBar()
+                            showToast(
+                                requireContext(),
+                                getString(R.string.check_previous_app_setting_message)
+                            )
+
+                            getAppSettingsFromCloudDatabase()
+                        }
+
                     } else {
                         // If sign in fails, display a message to the user.
                         Log.w(TAG, "signInWithCredential:failure", task.exception)
@@ -592,6 +688,63 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                 }
         } catch (e: Exception) {
         }
+    }
+
+    private var isRecordsFound = true
+
+    private fun getAppSettingsFromCloudDatabase() {
+
+        try {
+            showProgressBar()
+
+            FirebaseFirestore.getInstance()
+                .collection(getString(R.string.appSetting))
+                .document(getUid()!!)
+                .get()
+                .addOnSuccessListener {
+
+                    val appSetting = it.toObject(AppSetting::class.java)
+
+                    try {
+
+                        if (appSetting != null) {
+
+                            Log.i(TAG, "getAppSettingsFromCloudDatabase: appSetting not null")
+                            appSettingViewModel.insert(appSetting)
+
+                            hideProgressBar()
+                            isRecordsFound = true
+                        } else {
+
+                            Log.i(TAG, "handleIfNoRecordsFound: appSetting null")
+                            handleIfNoRecordsFound()
+                        }
+                    } catch (e: java.lang.Exception) {
+                        e.printStackTrace()
+                    }
+                }.addOnFailureListener {
+
+                    handleIfNoRecordsFound()
+                }
+        } catch (e: Exception) {
+
+            e.printStackTrace()
+        }
+    }
+
+    private fun handleIfNoRecordsFound() {
+
+        isRecordsFound = false
+        showToast(
+            requireContext(),
+            "Sorry!! No records found. Go with OFFLINE or ONLINE mode.",
+            Toast.LENGTH_LONG
+        )
+        hideProgressBar()
+
+        signOut()
+
+        binding.include.modeRG.check(binding.include.modeOfflineRB.id)
     }
 
     private fun signOut() {
@@ -612,7 +765,11 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                 try {
 
-                    findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
+                    if (isRecordsFound) {
+
+                        findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
+                    }
+                    binding.include.emailTV.hide()
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -642,6 +799,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
         try {
 
             binding.progressBar.show()
+            binding.nextBtn.isEnabled = false
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -652,6 +810,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
         try {
 
             binding.progressBar.hide()
+            binding.nextBtn.isEnabled = true
         } catch (e: Exception) {
             e.printStackTrace()
         }

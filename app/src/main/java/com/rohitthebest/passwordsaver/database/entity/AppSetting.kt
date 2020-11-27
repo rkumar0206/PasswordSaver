@@ -8,6 +8,8 @@ import com.google.firebase.firestore.Exclude
 data class AppSetting(
     var mode: String = "",
     var appPassword: String,
+    var securityQuestion: String,
+    var securityAnswer: String,
     var uid: String?,
     var isPasswordRequiredForCopy: String = "true",
     var isPasswordRequiredForVisibility: String = "true",
@@ -20,6 +22,8 @@ data class AppSetting(
     var id: Int? = null
 
     constructor() : this(
+        "",
+        "",
         "",
         "",
         "",

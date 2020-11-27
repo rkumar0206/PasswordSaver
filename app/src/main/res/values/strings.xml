@@ -48,4 +48,13 @@
     <string name="onSeePasswordBtnClick">onSeePasswordBtnClick</string>
     <string name="onDeleteBtnClick">onDeleteButtonClick</string>
     <string name="onEditClick">onEditClick</string>
+    <string name="check_previous_app_setting_message">Checking for previous app settings…</string>
+
+    <string-array name="security_questions">
+        <item>"What is the name of your school?"</item>
+        <item>"Who is your favourite movie star?"</item>
+        <item>"Which flower do like most?"</item>
+        <item>"What is your pet name?"</item>
+        <item>"Your best-friend name?"</item>
+    </string-array>
 </resources>
