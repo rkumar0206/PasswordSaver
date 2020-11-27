@@ -6,6 +6,7 @@ import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.os.Bundle
 import android.os.CancellationSignal
+import android.text.InputType
 import android.util.Log
 import android.view.*
 import android.widget.ImageButton
@@ -24,6 +25,7 @@ import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
+import com.afollestad.materialdialogs.input.input
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
@@ -68,7 +70,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
 
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
 
@@ -239,9 +241,9 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             .setNegativeButton(
                 "Use your password",
                 requireActivity().mainExecutor,
-                DialogInterface.OnClickListener { dialog, which ->
+                DialogInterface.OnClickListener { _, _ ->
 
-                    //todo : use password validation
+                    checkForPasswordValidation()
                 }).build()
 
 
@@ -254,7 +256,30 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     private fun checkForPasswordValidation() {
 
-        //todo : check for password
+        MaterialDialog(requireContext()).show {
+
+            title(text = "Password")
+            positiveButton(text = "Confirm")
+            negativeButton(text = "Cancel")
+
+            input(
+                hint = "Enter your password",
+                inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD,
+                allowEmpty = false
+            ) { _, inputString ->
+
+                val encryptPassword = EncryptData().encryptWithSHA(inputString.toString())
+
+                if (encryptPassword == appSetting?.appPassword) {
+
+                    findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
+                } else {
+
+                    showToast(requireContext(), "Password doesn't match!!!")
+                    checkForPasswordValidation()
+                }
+            }
+        }
     }
 
     private val authenticationCallback: BiometricPrompt.AuthenticationCallback
@@ -270,7 +295,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
                 super.onAuthenticationSucceeded(result)
 
-                var decryptedPassword: String? = ""
+                val decryptedPassword: String?
 
                 decryptedPassword = try {
                     EncryptData().decryptAES(
