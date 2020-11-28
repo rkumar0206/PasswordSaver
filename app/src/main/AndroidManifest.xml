@@ -23,11 +23,9 @@
         </activity>
 
         <service android:name=".services.UploadService" />
-        <service android:name=".services.UploadAppSettingsService" />
-        <service android:name=".services.UpdatePasswordService" />
         <service android:name=".services.UpdateService" />
         <service android:name=".services.DeleteService" />
-        <service android:name=".services.DeleteAppSettingAndPasswordService" />
+
     </application>
 
 </manifest>
