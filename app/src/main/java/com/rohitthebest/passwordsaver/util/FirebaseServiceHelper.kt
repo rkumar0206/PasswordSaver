@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.rohitthebest.passwordsaver.other.Constants
+import com.rohitthebest.passwordsaver.services.DeleteService
 import com.rohitthebest.passwordsaver.services.UpdateService
 import com.rohitthebest.passwordsaver.services.UploadService
 
@@ -78,7 +79,6 @@ class FirebaseServiceHelper {
         }
 
 
-/*
         fun deleteDocumentFromFireStore(
             context: Context,
             collection: String,
@@ -104,7 +104,6 @@ class FirebaseServiceHelper {
 
             ContextCompat.startForegroundService(context, foregroundService)
         }
-*/
 
 /*
         fun deleteAllDocumentsUsingKey(

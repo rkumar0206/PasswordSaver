@@ -26,21 +26,27 @@ import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
 import com.afollestad.materialdialogs.input.input
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
 import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
+import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertPasswordToJson
 import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper
+import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.deleteDocumentFromFireStore
 import com.rohitthebest.passwordsaver.util.Functions.Companion.closeKeyboard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.copyToClipBoard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
+import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.util.Functions.Companion.show
+import com.rohitthebest.passwordsaver.util.Functions.Companion.showNoInternetMessage
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
@@ -343,7 +349,33 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
             getCustomView().findViewById<ImageButton>(R.id.deleteBtn).setOnClickListener {
 
-                //todo : delete password from database
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle("Are you sure?")
+                    .setMessage("After deleting you will lose this password.")
+                    .setPositiveButton("DELETE") { dialog, _ ->
+
+                        if (passwrd?.mode == OFFLINE || passwrd?.isSynced == NOT_SYNCED) {
+                            deletePassword(passwrd!!)
+                        } else {
+
+                            if (isInternetAvailable(requireContext())) {
+
+                                deletePassword(passwrd!!)
+                            } else {
+
+                                showNoInternetMessage(requireContext())
+                            }
+                        }
+                        dialog.dismiss()
+                    }
+                    .setNegativeButton("Cancel") { dialog, _ ->
+
+                        dialog.dismiss()
+                    }
+                    .create()
+                    .show()
+
+                dismiss()
             }
 
             getCustomView().findViewById<ImageButton>(R.id.siteNameCopyBtn)
@@ -362,6 +394,46 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
                     copyToClipBoard(requireActivity(), decryptedPassword.toString())
                 }
+        }
+    }
+
+    private fun deletePassword(password: Password) {
+
+        try {
+
+            var isUndoClicked = false
+
+            passwordViewModel.delete(password)
+
+            Snackbar.make(
+                binding.homeFragCoordinatorLayout,
+                "Password deleted",
+                Snackbar.LENGTH_LONG
+            )
+                .setAction("Undo") {
+
+                    passwordViewModel.insert(password)
+                    showToast(requireContext(), "Password restored")
+                    isUndoClicked = true
+                }
+                .addCallback(object : Snackbar.Callback() {
+
+                    override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
+
+                        if (!isUndoClicked && (password.mode != OFFLINE || password.isSynced != NOT_SYNCED)) {
+
+                            deleteDocumentFromFireStore(
+                                requireContext(),
+                                getString(R.string.savedPasswords),
+                                password.key!!
+                            )
+                        }
+                    }
+                })
+                .show()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 

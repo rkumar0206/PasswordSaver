@@ -194,7 +194,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             this.password = encryptedPassword
             uid = ""
             key = ""
-            isSynced = NOT_SYNCED
+            isSynced = SYNCED
             timeStamp = System.currentTimeMillis()
         }
 
@@ -281,7 +281,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 showToast(
                     requireContext(),
-                    "In Online mode you need to have an active internet connection for editing.",
+                    "In Online mode you need to have an active internet connection for editing your password.",
                     Toast.LENGTH_LONG
                 )
             }
