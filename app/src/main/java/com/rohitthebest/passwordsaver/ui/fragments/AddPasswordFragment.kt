@@ -123,7 +123,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                 TAG, "updateUI: decrypted password : ${
                     EncryptData().decryptAES(
                         it.password,
-                        appSetting?.appPassword
+                        appSetting?.secretKey
                     )
                 }"
             )
@@ -131,7 +131,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
                 binding.passwordET.editText?.setText(
                     EncryptData().decryptAES(
                         it.password,
-                        appSetting?.appPassword
+                        appSetting?.secretKey
                     )
                 )
             } catch (e: java.lang.Exception) {
@@ -292,7 +292,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
         return try {
 
-            EncryptData().encryptWithAES(password, appSetting?.appPassword)
+            EncryptData().encryptWithAES(password, appSetting?.secretKey)
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
             ""

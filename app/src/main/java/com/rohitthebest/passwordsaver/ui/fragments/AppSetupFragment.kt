@@ -46,6 +46,7 @@ import com.rohitthebest.passwordsaver.other.Constants.TRY_SIGNIN
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertAppSettingToJson
+import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.updateDocumentOnFireStore
 import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.uploadDocumentToFireStore
 import com.rohitthebest.passwordsaver.util.Functions.Companion.checkBiometricSupport
 import com.rohitthebest.passwordsaver.util.Functions.Companion.getUid
@@ -55,9 +56,12 @@ import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailab
 import com.rohitthebest.passwordsaver.util.Functions.Companion.show
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showNoInternetMessage
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
+import com.rohitthebest.passwordsaver.util.Functions.Companion.toStringM
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+import kotlin.random.Random
 
 @AndroidEntryPoint
 class AppSetupFragment : Fragment(), View.OnClickListener,
@@ -223,9 +227,9 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                 hint = "Enter your password",
                 inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD,
                 allowEmpty = false
-            ) { _, charsequence ->
+            ) { _, inputString ->
 
-                val encryptPassword = EncryptData().encryptWithSHA(charsequence.toString())
+                val encryptPassword = EncryptData().encryptWithSHA(inputString.toString())
 
                 if (encryptPassword == appSetting?.appPassword) {
 
@@ -238,7 +242,92 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             }
         }.negativeButton(text = "Forgot password") {
 
-            //todo : check for security question
+            askForSecurityAnswer()
+        }
+    }
+
+    private fun askForSecurityAnswer() {
+
+        MaterialDialog(requireContext()).show {
+
+            title(text = "Security Question")
+            positiveButton(text = "Confirm")
+            negativeButton(text = "Cancel") {
+
+                checkForPasswordValidation()
+            }
+            message(
+                text = EncryptData().decryptAES(
+                    appSetting?.securityQuestion,
+                    appSetting?.secretKey
+                )
+            )
+            input(hint = "Your answer here", allowEmpty = false) { _, inputString ->
+
+                if (inputString.toString().trim()
+                        .toLowerCase(Locale.ROOT) == EncryptData().decryptAES(
+                        appSetting?.securityAnswer,
+                        appSetting?.secretKey
+                    )
+                ) {
+
+                    resetPassword()
+                } else {
+
+                    showToast(requireContext(), "Oops!! wrong answer")
+                    checkForPasswordValidation()
+                }
+            }
+        }
+
+    }
+
+    private fun resetPassword() {
+
+        MaterialDialog(requireContext()).show {
+
+            title(text = "Enter new password")
+            positiveButton(text = "Reset password")
+            negativeButton(text = "Cancel") {
+
+                checkForPasswordValidation()
+            }
+
+            input(
+                hint = "Enter new password"
+            ) { _, charSequence ->
+
+                if (charSequence.toString().trim().isNotEmpty()) {
+
+                    val encryptPassword =
+                        EncryptData().encryptWithSHA(charSequence.toString().trim())
+                    //flag = false
+
+                    appSetting?.appPassword = encryptPassword
+
+                    if (appSetting?.mode != OFFLINE) {
+
+                        val map = HashMap<String, Any?>()
+                        map["appPassword"] = encryptPassword
+
+                        updateDocumentOnFireStore(
+                            requireContext(),
+                            map,
+                            getString(R.string.appSetting),
+                            getUid()!!
+                        )
+
+                        appSettingViewModel.insert(appSetting!!)
+
+                    } else {
+
+                        appSettingViewModel.insert(appSetting!!)
+                    }
+
+                    showToast(requireContext(), "Password changed")
+
+                }
+            }
         }
     }
 
@@ -413,19 +502,27 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             else -> TRY_SIGNIN
         }
 
-        val encryptedPassword = EncryptData().encryptWithSHA(
+        val encryptedAppPassword = EncryptData().encryptWithSHA(
             binding.include.passwordET.editText?.text.toString().trim()
         )
+
+        val encryptedSecretKey = EncryptData().encryptWithSHA(
+            "${System.currentTimeMillis().toStringM(69)}_${
+                Random.nextLong(100, 9223372036854775).toStringM(69)
+            }"
+        )
+
+        Log.i(TAG, "saveAppSettingToDatabase: Secret key : $encryptedSecretKey")
 
         val encryptedSecurityQuestion =
             EncryptData().encryptWithAES(
                 securityQuestion.toLowerCase(Locale.ROOT),
-                encryptedPassword
+                encryptedSecretKey
             )!!
 
         val encryptedSecurityAnswer = EncryptData().encryptWithAES(
             binding.include.securityAnswerET.editText?.text.toString().trim()
-                .toLowerCase(Locale.ROOT), encryptedPassword
+                .toLowerCase(Locale.ROOT), encryptedSecretKey
         )!!
 
         val isFingerPrintEnabled =
@@ -446,10 +543,11 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
         val appSetting = AppSetting(
             mode = mode,
-            appPassword = encryptedPassword,
+            appPassword = encryptedAppPassword,
             securityQuestion = encryptedSecurityQuestion,
             securityAnswer = encryptedSecurityAnswer,
             uid = getUid(),
+            secretKey = encryptedSecretKey,
             isPasswordRequiredForCopy = getString(R.string.t),
             isPasswordRequiredForVisibility = getString(R.string.t),
             isFingerprintEnabled = isFingerPrintEnabled,

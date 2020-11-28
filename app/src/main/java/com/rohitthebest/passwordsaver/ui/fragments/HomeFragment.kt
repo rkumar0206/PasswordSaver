@@ -306,7 +306,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         decryptedPassword = try {
             EncryptData().decryptAES(
                 passwrd?.password,
-                appSetting?.appPassword
+                appSetting?.secretKey
             )
         } catch (e: Exception) {
             e.printStackTrace()

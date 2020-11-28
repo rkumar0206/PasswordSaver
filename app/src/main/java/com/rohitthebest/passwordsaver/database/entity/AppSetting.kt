@@ -8,6 +8,7 @@ import com.google.firebase.firestore.Exclude
 data class AppSetting(
     var mode: String = "",
     var appPassword: String,
+    var secretKey: String,
     var securityQuestion: String,
     var securityAnswer: String,
     var uid: String?,
@@ -22,6 +23,7 @@ data class AppSetting(
     var id: Int? = null
 
     constructor() : this(
+        "",
         "",
         "",
         "",
