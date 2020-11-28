@@ -60,6 +60,18 @@ class Functions {
             }
         }
 
+        fun showKeyboard(activity: Activity, view: View) {
+            try {
+
+                val inputMethodManager =
+                    activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
+                inputMethodManager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+            } catch (e: java.lang.Exception) {
+                e.printStackTrace()
+            }
+        }
+
         fun hideKeyBoard(activity: Activity) {
 
             try {

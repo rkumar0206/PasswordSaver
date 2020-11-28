@@ -21,6 +21,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.customview.customView
@@ -44,8 +45,10 @@ import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.delet
 import com.rohitthebest.passwordsaver.util.Functions.Companion.closeKeyboard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.copyToClipBoard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
+import com.rohitthebest.passwordsaver.util.Functions.Companion.hideKeyBoard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.util.Functions.Companion.show
+import com.rohitthebest.passwordsaver.util.Functions.Companion.showKeyboard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showNoInternetMessage
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import dagger.hilt.android.AndroidEntryPoint
@@ -70,6 +73,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     private var cancellationSignal: CancellationSignal? = null
 
+    private var isSearchViewVisible = false
+
     private var passwrd: Password? = Password()
 
     override fun onCreateView(
@@ -89,13 +94,12 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         mAdapter = SavedPasswordRVAdapter()
 
         //loadData()
-
         getAppSetting()
 
         showProgressBar()
         GlobalScope.launch {
 
-            delay(300)
+            delay(350)
             withContext(Dispatchers.Main) {
 
                 getAllSavedPassword()
@@ -464,13 +468,33 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         return cancellationSignal as CancellationSignal
     }
 
-
     private fun initListeners() {
 
         binding.addPasswordFAB.setOnClickListener(this)
         binding.homeFragCoordinatorLayout.setOnClickListener(this)
         binding.menuBtn.setOnClickListener(this)
         binding.helpBtn.setOnClickListener(this)
+        binding.searchBtn.setOnClickListener(this)
+
+        binding.savedPasswordRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+
+                try {
+                    if (dy > 0 && binding.addPasswordFAB.visibility == View.VISIBLE) {
+
+                        binding.addPasswordFAB.hide()
+                    } else if (dy < 0 && binding.addPasswordFAB.visibility != View.VISIBLE) {
+
+                        binding.addPasswordFAB.show()
+
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        })
     }
 
     override fun onClick(v: View?) {
@@ -487,6 +511,17 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                 showPopupMenu(binding.menuBtn)
             }
 
+            binding.searchBtn.id -> {
+
+                if (!isSearchViewVisible) {
+
+                    showSearchView()
+                } else {
+
+                    hideSearchView()
+                }
+            }
+
             binding.helpBtn.id -> {
 
                 findNavController().navigate(R.id.action_homeFragment_to_helpFragment)
@@ -496,6 +531,37 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         CoroutineScope(Dispatchers.IO).launch {
 
             closeKeyboard(requireActivity())
+        }
+    }
+
+    private fun showSearchView() {
+
+        isSearchViewVisible = !isSearchViewVisible
+
+        binding.searchView.show()
+        binding.searchView.animate().translationY(0f).alpha(1f).setDuration(350).start()
+
+        binding.searchView.requestFocus()
+
+        showKeyboard(requireActivity(), binding.searchView)
+    }
+
+    private fun hideSearchView() {
+
+        isSearchViewVisible = !isSearchViewVisible
+
+        binding.searchView.animate().translationY(-50f).alpha(0f).setDuration(350).start()
+
+        GlobalScope.launch {
+
+            delay(360)
+
+            hideKeyBoard(requireActivity())
+            withContext(Dispatchers.Main) {
+
+                binding.searchView.hide()
+                binding.searchView.setQuery("", true)
+            }
         }
     }
 
@@ -553,15 +619,12 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         binding.noPassAddedTV.visibility = View.VISIBLE
         binding.savedPasswordRV.visibility = View.GONE
-        binding.searchView.visibility = View.GONE
     }
 
     private fun hideNoPassTV() {
 
         binding.noPassAddedTV.visibility = View.GONE
         binding.savedPasswordRV.visibility = View.VISIBLE
-        binding.searchView.visibility = View.VISIBLE
-
     }
 
     override fun onDestroyView() {
