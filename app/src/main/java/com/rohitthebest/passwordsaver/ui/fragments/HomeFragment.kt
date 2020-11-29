@@ -292,6 +292,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         passwrd = password
 
+        isPasswordRequiredForDeleting = false
+
         if (appSetting?.isFingerprintEnabled == getString(R.string.t)) {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
@@ -351,6 +353,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         )
     }
 
+    private var isPasswordRequiredForDeleting = false
+
     private fun checkForPasswordValidation() {
 
         MaterialDialog(requireContext()).show {
@@ -369,7 +373,13 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
                 if (encryptPassword == appSetting?.appPassword) {
 
-                    showPasswordInBottomSheet()
+                    if (isPasswordRequiredForDeleting) {
+
+                        showDialogForDeletingPassword()
+                    } else {
+
+                        showPasswordInBottomSheet()
+                    }
                 } else {
 
                     showToast(requireContext(), "Password doesn't match!!!")
@@ -396,7 +406,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         }
 
     private fun showPasswordInBottomSheet() {
-
 
         val decryptedPassword: String?
 
@@ -440,32 +449,15 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
             getCustomView().findViewById<ImageButton>(R.id.deleteBtn).setOnClickListener {
 
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Are you sure?")
-                    .setMessage("After deleting you will lose this password.")
-                    .setPositiveButton("DELETE") { dialog, _ ->
+                if (appSetting?.isPasswordRequiredForDeleting == getString(R.string.t)) {
 
-                        if (passwrd?.mode == OFFLINE || passwrd?.isSynced == NOT_SYNCED) {
-                            deletePassword(passwrd!!)
-                        } else {
+                    isPasswordRequiredForDeleting = true
+                    checkForPasswordValidation()
 
-                            if (isInternetAvailable(requireContext())) {
+                } else {
 
-                                deletePassword(passwrd!!)
-                            } else {
-
-                                showNoInternetMessage(requireContext())
-                            }
-                        }
-                        dialog.dismiss()
-                    }
-                    .setNegativeButton("Cancel") { dialog, _ ->
-
-                        dialog.dismiss()
-                    }
-                    .create()
-                    .show()
-
+                    showDialogForDeletingPassword()
+                }
                 dismiss()
             }
 
@@ -486,6 +478,36 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                     copyToClipBoard(requireActivity(), decryptedPassword.toString())
                 }
         }
+    }
+
+    private fun showDialogForDeletingPassword() {
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Are you sure?")
+            .setMessage("After deleting you will lose this password.")
+            .setPositiveButton("DELETE") { dialog, _ ->
+
+                if (passwrd?.mode == OFFLINE || passwrd?.isSynced == NOT_SYNCED) {
+                    deletePassword(passwrd!!)
+                } else {
+
+                    if (isInternetAvailable(requireContext())) {
+
+                        deletePassword(passwrd!!)
+                    } else {
+
+                        showNoInternetMessage(requireContext())
+                    }
+                }
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+
+                dialog.dismiss()
+            }
+            .create()
+            .show()
+
     }
 
     private fun deletePassword(password: Password) {

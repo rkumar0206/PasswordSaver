@@ -553,8 +553,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             securityAnswer = encryptedSecurityAnswer,
             uid = getUid(),
             secretKey = encryptedSecretKey,
-            isPasswordRequiredForCopy = getString(R.string.t),
-            isPasswordRequiredForVisibility = getString(R.string.t),
+            isPasswordRequiredForDeleting = getString(R.string.t),
             isFingerprintEnabled = isFingerPrintEnabled,
             key = getUid()!!
         )
@@ -841,13 +840,15 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                             }
                         }
                     } else {
-
-                        handleIfNoRecordsFound()
+                        if (
+                            binding.include.modeRG.checkedRadioButtonId == binding.include.modeTrySignInRB.id) {
+                            handleIfNoRecordsFound()
+                        }
                     }
 
                 }.addOnFailureListener {
 
-                    handleIfNoRecordsFound()
+                    Log.i(TAG, "getAppSettingsFromCloudDatabase: $it")
                 }
         } catch (e: Exception) {
 

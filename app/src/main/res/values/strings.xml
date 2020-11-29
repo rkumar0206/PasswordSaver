@@ -27,8 +27,8 @@
     <string name="change_password">Change Password</string>
     <string name="editbtn">editBtn</string>
     <string name="general_settings">General Settings</string>
-    <string name="enter_password_every_time_you_copy_password">Enter password every time you copy password</string>
-    <string name="enter_password_every_time_you_want_to_see_your_password">Enter password every time you want to see your password</string>
+    <string name="enter_password_every_time_you_copy_password">Enter app password every time you copy password.</string>
+    <string name="enter_password_every_time_you_want_to_see_your_password">Enter app password before deleting your password.</string>
     <string name="no_passwords_added">No Passwords added!!!</string>
     <string name="saved_passwords">Saved Passwords</string>
     <string name="site_name">Site Name (Optional)</string>
@@ -49,6 +49,7 @@
     <string name="onDeleteBtnClick">onDeleteButtonClick</string>
     <string name="onEditClick">onEditClick</string>
     <string name="check_previous_app_setting_message">Checking for previous app settings…</string>
+    <string name="use_fingerprint_authentication">Use Fingerprint authentication.</string>
 
     <string-array name="security_questions">
         <item>"What is the name of your school?"</item>

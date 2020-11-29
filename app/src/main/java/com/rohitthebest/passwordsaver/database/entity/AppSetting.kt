@@ -12,8 +12,7 @@ data class AppSetting(
     var securityQuestion: String,
     var securityAnswer: String,
     var uid: String?,
-    var isPasswordRequiredForCopy: String = "true",
-    var isPasswordRequiredForVisibility: String = "true",
+    var isPasswordRequiredForDeleting: String = "true",
     var isFingerprintEnabled: String = "false",
     var key: String
 ) {
@@ -31,7 +30,6 @@ data class AppSetting(
         "",
         "true",
         "true",
-        "false",
-        ""
+        "false"
     )
 }
