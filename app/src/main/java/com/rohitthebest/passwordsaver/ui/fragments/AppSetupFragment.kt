@@ -491,6 +491,8 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
         }
     }
 
+    private var encryptedSecretKey = ""
+
     private fun saveAppSettingToDatabase() {
 
         val mode = when (binding.include.modeRG.checkedRadioButtonId) {
@@ -506,11 +508,14 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             binding.include.passwordET.editText?.text.toString().trim()
         )
 
-        val encryptedSecretKey = EncryptData().encryptWithSHA(
-            "${System.currentTimeMillis().toStringM(69)}_${
-                Random.nextLong(100, 9223372036854775).toStringM(69)
-            }"
-        )
+        if (encryptedSecretKey == "") {
+
+            EncryptData().encryptWithSHA(
+                "${System.currentTimeMillis().toStringM(69)}_${
+                    Random.nextLong(100, 9223372036854775).toStringM(69)
+                }"
+            )
+        }
 
         Log.i(TAG, "saveAppSettingToDatabase: Secret key : $encryptedSecretKey")
 
@@ -762,14 +767,9 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                         showToast(requireContext(), "SignIn successful")
                         showEmailTV()
 
-                        if (binding.include.modeRG.checkedRadioButtonId == binding.include.modeTrySignInRB.id) {
+                        if (binding.include.modeRG.checkedRadioButtonId != binding.include.modeOfflineRB.id) {
 
                             showProgressBar()
-                            showToast(
-                                requireContext(),
-                                getString(R.string.check_previous_app_setting_message)
-                            )
-
                             getAppSettingsFromCloudDatabase()
                         }
 
@@ -801,25 +801,50 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                 .get()
                 .addOnSuccessListener {
 
-                    val appSetting = it.toObject(AppSetting::class.java)
+                    if (it.exists()) {
 
-                    try {
+                        val appSetting = it.toObject(AppSetting::class.java)
 
-                        if (appSetting != null) {
+                        if (binding.include.modeRG.checkedRadioButtonId == binding.include.modeOnlineRB.id) {
 
-                            Log.i(TAG, "getAppSettingsFromCloudDatabase: appSetting not null")
-                            appSettingViewModel.insert(appSetting)
+                            // setting the secret key to the secret key that is stored in the cloud database
+                            // otherwise the passwords will not be decrypted again after the he changes the password
+                            encryptedSecretKey = appSetting?.secretKey!!
 
-                            hideProgressBar()
-                            isRecordsFound = true
-                        } else {
+                        } else if (
+                            binding.include.modeRG.checkedRadioButtonId == binding.include.modeTrySignInRB.id) {
 
-                            Log.i(TAG, "handleIfNoRecordsFound: appSetting null")
-                            handleIfNoRecordsFound()
+                            showToast(
+                                requireContext(),
+                                getString(R.string.check_previous_app_setting_message)
+                            )
+
+                            try {
+
+                                if (appSetting != null) {
+
+                                    Log.i(
+                                        TAG,
+                                        "getAppSettingsFromCloudDatabase: appSetting not null"
+                                    )
+                                    appSettingViewModel.insert(appSetting)
+
+                                    hideProgressBar()
+                                    isRecordsFound = true
+                                } else {
+
+                                    Log.i(TAG, "handleIfNoRecordsFound: appSetting null")
+                                    handleIfNoRecordsFound()
+                                }
+                            } catch (e: java.lang.Exception) {
+                                e.printStackTrace()
+                            }
                         }
-                    } catch (e: java.lang.Exception) {
-                        e.printStackTrace()
+                    } else {
+
+                        handleIfNoRecordsFound()
                     }
+
                 }.addOnFailureListener {
 
                     handleIfNoRecordsFound()

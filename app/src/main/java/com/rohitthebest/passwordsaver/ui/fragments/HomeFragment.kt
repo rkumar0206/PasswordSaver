@@ -1,6 +1,7 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.DialogInterface
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
@@ -29,12 +30,16 @@ import com.afollestad.materialdialogs.customview.getCustomView
 import com.afollestad.materialdialogs.input.input
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.firestore.FirebaseFirestore
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
 import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
+import com.rohitthebest.passwordsaver.other.Constants.SHARED_PREFERENCE_KEY
+import com.rohitthebest.passwordsaver.other.Constants.SHARED_PREFERENCE_NAME
+import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
@@ -44,6 +49,7 @@ import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper
 import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.deleteDocumentFromFireStore
 import com.rohitthebest.passwordsaver.util.Functions.Companion.closeKeyboard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.copyToClipBoard
+import com.rohitthebest.passwordsaver.util.Functions.Companion.getUid
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hideKeyBoard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
@@ -77,6 +83,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     private var passwrd: Password? = Password()
 
+    private var isSyncedFromCloud = false
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -93,7 +101,13 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         mAdapter = SavedPasswordRVAdapter()
 
-        //loadData()
+        loadData()
+
+        if (!isSyncedFromCloud) {
+
+            syncPasswordFromCloud()
+        }
+
         getAppSetting()
 
         showProgressBar()
@@ -107,6 +121,75 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         }
 
         initListeners()
+    }
+
+    private fun syncPasswordFromCloud() {
+
+        showProgressBar()
+
+        if (appSetting?.mode != OFFLINE) {
+
+            if (isInternetAvailable(requireContext())) {
+
+                FirebaseFirestore.getInstance()
+                    .collection(getString(R.string.savedPasswords))
+                    .whereEqualTo("uid", getUid())
+                    .get()
+                    .addOnSuccessListener {
+
+                        if (!it.isEmpty) {
+
+                            for (p in it) {
+
+                                val password = p.toObject(Password::class.java)
+
+                                passwordViewModel.insert(password)
+                            }
+                        }
+
+                        isSyncedFromCloud = true
+
+                        saveData()
+
+                        hideProgressBar()
+                    }
+                    .addOnFailureListener {
+
+                        showToast(requireContext(), it.toString())
+                        hideProgressBar()
+                    }
+
+            } else {
+
+                showNoInternetMessage(requireContext())
+            }
+        }
+    }
+
+    private fun saveData() {
+
+        val sharedPreference =
+            requireActivity().getSharedPreferences(SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE)
+
+        val editor = sharedPreference.edit()
+
+        editor.putBoolean(SHARED_PREFERENCE_KEY, isSyncedFromCloud)
+
+        editor.apply()
+    }
+
+    private fun loadData() {
+
+        val sharedPreference =
+            requireActivity().getSharedPreferences(SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE)
+
+        try {
+
+            isSyncedFromCloud = sharedPreference.getBoolean(SHARED_PREFERENCE_KEY, false)
+
+        } catch (e: java.lang.Exception) {
+            e.printStackTrace()
+        }
     }
 
     private fun getAppSetting() {
@@ -225,6 +308,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         if (password?.isSynced == NOT_SYNCED) {
 
+            password.isSynced = SYNCED
+
             FirebaseServiceHelper.uploadDocumentToFireStore(
                 requireContext(),
                 convertPasswordToJson(password),
@@ -233,6 +318,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             )
 
             showToast(requireContext(), "Password synced")
+
+            passwordViewModel.insert(password)
         } else {
 
             showToast(requireContext(), "Already synced")
