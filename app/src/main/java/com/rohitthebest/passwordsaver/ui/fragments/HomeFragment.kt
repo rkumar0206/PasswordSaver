@@ -37,6 +37,7 @@ import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
 import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
+import com.rohitthebest.passwordsaver.other.Constants.ONLINE
 import com.rohitthebest.passwordsaver.other.Constants.SHARED_PREFERENCE_KEY
 import com.rohitthebest.passwordsaver.other.Constants.SHARED_PREFERENCE_NAME
 import com.rohitthebest.passwordsaver.other.Constants.SYNCED
@@ -163,6 +164,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
                 showNoInternetMessage(requireContext())
             }
+        } else {
+
+            isSyncedFromCloud = true
+            saveData()
         }
     }
 
@@ -487,7 +492,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             .setMessage("After deleting you will lose this password.")
             .setPositiveButton("DELETE") { dialog, _ ->
 
-                if (passwrd?.mode == OFFLINE || passwrd?.isSynced == NOT_SYNCED) {
+                if (passwrd?.mode == OFFLINE || (passwrd?.mode == ONLINE && passwrd?.isSynced == NOT_SYNCED)) {
+
                     deletePassword(passwrd!!)
                 } else {
 
@@ -533,7 +539,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
                     override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
 
-                        if (!isUndoClicked && (password.mode != OFFLINE || password.isSynced != NOT_SYNCED)) {
+                        if (!isUndoClicked && (password.mode != OFFLINE || (passwrd?.mode == ONLINE && password.isSynced != NOT_SYNCED))) {
 
                             deleteDocumentFromFireStore(
                                 requireContext(),

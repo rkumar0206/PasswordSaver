@@ -17,7 +17,6 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.RadioGroup
-import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -33,7 +32,6 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
@@ -42,7 +40,6 @@ import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
 import com.rohitthebest.passwordsaver.other.Constants.ONLINE
 import com.rohitthebest.passwordsaver.other.Constants.RC_SIGN_IN
-import com.rohitthebest.passwordsaver.other.Constants.TRY_SIGNIN
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertAppSettingToJson
@@ -154,6 +151,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                     binding.include.fingerprintCL.show()
                     binding.include.setupCL.hide()
+
 
                     if (flag) {
 
@@ -390,7 +388,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                 if (s?.trim()?.isEmpty()!!) {
 
                     binding.include.confirmPasswordET.error = EDITTEXT_EMPTY_MESSAGE
-                } else if (binding.include.confirmPasswordET.editText?.text.toString()
+                } else if (binding.include.passwordET.editText?.text.toString()
                         .isNotEmpty()
                 ) {
 
@@ -491,31 +489,31 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
         }
     }
 
-    private var encryptedSecretKey = ""
-
     private fun saveAppSettingToDatabase() {
 
         val mode = when (binding.include.modeRG.checkedRadioButtonId) {
 
             binding.include.modeOfflineRB.id -> OFFLINE
 
-            binding.include.modeOnlineRB.id -> ONLINE
-
-            else -> TRY_SIGNIN
+            else -> ONLINE
         }
 
-        val encryptedAppPassword = EncryptData().encryptWithSHA(
-            binding.include.passwordET.editText?.text.toString().trim()
-        )
-
-        if (encryptedSecretKey == "") {
+        val encryptedSecretKey = if (mode == OFFLINE) {
 
             EncryptData().encryptWithSHA(
                 "${System.currentTimeMillis().toStringM(69)}_${
                     Random.nextLong(100, 9223372036854775).toStringM(69)
                 }"
             )
+        } else {
+
+            createPasswordFromUserInformation()
         }
+
+
+        val encryptedAppPassword = EncryptData().encryptWithSHA(
+            binding.include.passwordET.editText?.text.toString().trim()
+        )
 
         Log.i(TAG, "saveAppSettingToDatabase: Secret key : $encryptedSecretKey")
 
@@ -583,9 +581,15 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
         }
     }
 
+    private fun createPasswordFromUserInformation(): String {
+
+        val user = mAuth.currentUser
+
+        return EncryptData().encryptWithSHA("${user?.displayName}${user?.uid}${user?.email}")
+    }
+
     private fun insertToLocalDatabase(appSetting: AppSetting) {
 
-        isRecordsFound = true
         flag = false
         appSettingViewModel.insert(appSetting)
         if (appSetting.mode == OFFLINE && mAuth.currentUser != null) {
@@ -611,9 +615,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             return false
         }
 
-        if (binding.include.modeRG.checkedRadioButtonId == binding.include.modeOnlineRB.id
-            || binding.include.modeRG.checkedRadioButtonId == binding.include.modeTrySignInRB.id
-        ) {
+        if (binding.include.modeRG.checkedRadioButtonId == binding.include.modeOnlineRB.id) {
 
             if (mAuth.currentUser == null) {
 
@@ -683,18 +685,6 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                 }
             }
 
-            binding.include.modeTrySignInRB.id -> {
-
-                binding.include.selectedModeTV.text = getString(R.string.trySignIn_text)
-
-                if (mAuth.currentUser == null) {
-
-                    binding.include.signInBtn.show()
-                } else {
-                    showEmailTV()
-                    getAppSettingsFromCloudDatabase()
-                }
-            }
         }
     }
 
@@ -765,13 +755,6 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                         showToast(requireContext(), "SignIn successful")
                         showEmailTV()
-
-                        if (binding.include.modeRG.checkedRadioButtonId != binding.include.modeOfflineRB.id) {
-
-                            showProgressBar()
-                            getAppSettingsFromCloudDatabase()
-                        }
-
                     } else {
                         // If sign in fails, display a message to the user.
                         Log.w(TAG, "signInWithCredential:failure", task.exception)
@@ -785,90 +768,6 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                 }
         } catch (e: Exception) {
         }
-    }
-
-    private var isRecordsFound = true
-
-    private fun getAppSettingsFromCloudDatabase() {
-
-        try {
-            showProgressBar()
-
-            FirebaseFirestore.getInstance()
-                .collection(getString(R.string.appSetting))
-                .document(getUid()!!)
-                .get()
-                .addOnSuccessListener {
-
-                    if (it.exists()) {
-
-                        val appSetting = it.toObject(AppSetting::class.java)
-
-                        if (binding.include.modeRG.checkedRadioButtonId == binding.include.modeOnlineRB.id) {
-
-                            // setting the secret key to the secret key that is stored in the cloud database
-                            // otherwise the passwords will not be decrypted again after the he changes the password
-                            encryptedSecretKey = appSetting?.secretKey!!
-
-                        } else if (
-                            binding.include.modeRG.checkedRadioButtonId == binding.include.modeTrySignInRB.id) {
-
-                            showToast(
-                                requireContext(),
-                                getString(R.string.check_previous_app_setting_message)
-                            )
-
-                            try {
-
-                                if (appSetting != null) {
-
-                                    Log.i(
-                                        TAG,
-                                        "getAppSettingsFromCloudDatabase: appSetting not null"
-                                    )
-                                    appSettingViewModel.insert(appSetting)
-
-                                    hideProgressBar()
-                                    isRecordsFound = true
-                                } else {
-
-                                    Log.i(TAG, "handleIfNoRecordsFound: appSetting null")
-                                    handleIfNoRecordsFound()
-                                }
-                            } catch (e: java.lang.Exception) {
-                                e.printStackTrace()
-                            }
-                        }
-                    } else {
-                        if (
-                            binding.include.modeRG.checkedRadioButtonId == binding.include.modeTrySignInRB.id) {
-                            handleIfNoRecordsFound()
-                        }
-                    }
-
-                }.addOnFailureListener {
-
-                    Log.i(TAG, "getAppSettingsFromCloudDatabase: $it")
-                }
-        } catch (e: Exception) {
-
-            e.printStackTrace()
-        }
-    }
-
-    private fun handleIfNoRecordsFound() {
-
-        isRecordsFound = false
-        showToast(
-            requireContext(),
-            "Sorry!! No records found. Go with OFFLINE or ONLINE mode.",
-            Toast.LENGTH_LONG
-        )
-        hideProgressBar()
-
-        signOut()
-
-        binding.include.modeRG.check(binding.include.modeOfflineRB.id)
     }
 
     private fun signOut() {
@@ -889,10 +788,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                 try {
 
-                    if (isRecordsFound) {
-
-                        findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
-                    }
+                    findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
                     binding.include.emailTV.hide()
                 } catch (e: Exception) {
                     e.printStackTrace()

@@ -102,27 +102,22 @@
                         android:padding="4dp"
                         android:text="@string/online" />
 
-                    <RadioButton
-                        android:id="@+id/modeTrySignInRB"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="8dp"
-                        android:padding="4dp"
-                        android:text="Try-SignIn" />
                 </RadioGroup>
 
                 <TextView
                     android:id="@+id/selectedModeTV"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
                     android:layout_marginTop="8dp"
+                    android:layout_marginEnd="16dp"
                     android:padding="3dp"
                     android:text="@string/offline_text"
                     android:textColor="@color/primary_text"
                     android:textSize="16sp"
-                    app:layout_constraintEnd_toEndOf="@+id/modeRG"
+                    app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.5"
-                    app:layout_constraintStart_toStartOf="@+id/modeRG"
+                    app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toBottomOf="@+id/modeRG" />
 
                 <TextView
