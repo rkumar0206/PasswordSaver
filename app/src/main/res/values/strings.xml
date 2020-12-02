@@ -24,7 +24,7 @@
     <string name="editPassword">Edit Password</string>
     <string name="settings">Settings</string>
     <string name="change_mode">Change Mode</string>
-    <string name="change_password">Change Password</string>
+    <string name="change_password">Change App Password</string>
     <string name="editbtn">editBtn</string>
     <string name="general_settings">General Settings</string>
     <string name="enter_password_every_time_you_copy_password">Enter app password every time you copy password.</string>

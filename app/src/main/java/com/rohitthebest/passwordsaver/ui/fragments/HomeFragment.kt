@@ -1,6 +1,5 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.DialogInterface
 import android.hardware.biometrics.BiometricPrompt
@@ -9,14 +8,13 @@ import android.os.Bundle
 import android.os.CancellationSignal
 import android.text.InputType
 import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageButton
-import android.widget.PopupMenu
 import android.widget.SearchView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
-import androidx.appcompat.view.menu.MenuBuilder
-import androidx.appcompat.view.menu.MenuPopupHelper
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
@@ -64,7 +62,7 @@ import java.util.*
 
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.OnClickListener,
-    View.OnClickListener, PopupMenu.OnMenuItemClickListener {
+    View.OnClickListener {
 
     private val TAG = "HomeFragment"
 
@@ -587,7 +585,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         binding.addPasswordFAB.setOnClickListener(this)
         binding.homeFragCoordinatorLayout.setOnClickListener(this)
-        binding.menuBtn.setOnClickListener(this)
+        binding.settingsBtn.setOnClickListener(this)
         binding.helpBtn.setOnClickListener(this)
         binding.searchBtn.setOnClickListener(this)
 
@@ -621,11 +619,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                 findNavController().navigate(R.id.action_homeFragment_to_addPasswordFragment)
             }
 
-            binding.menuBtn.id -> {
-
-                showPopupMenu(binding.menuBtn)
-            }
-
             binding.searchBtn.id -> {
 
                 if (!isSearchViewVisible) {
@@ -635,6 +628,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
                     hideSearchView()
                 }
+            }
+
+            binding.settingsBtn.id -> {
+
+                findNavController().navigate(R.id.action_homeFragment_to_settingsFragment)
             }
 
             binding.helpBtn.id -> {
@@ -680,36 +678,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         }
     }
 
-    @SuppressLint("RestrictedApi")
-    private fun showPopupMenu(view: View) {
-
-        try {
-            val popup = PopupMenu(requireContext(), view)
-            popup.menuInflater.inflate(R.menu.home_menu, popup.menu)
-            popup.setOnMenuItemClickListener(this)
-
-            val menuHelper = MenuPopupHelper(requireContext(), popup.menu as MenuBuilder, view)
-            menuHelper.setForceShowIcon(true)
-            menuHelper.gravity = Gravity.END
-
-            menuHelper.show()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    override fun onMenuItemClick(item: MenuItem?): Boolean {
-
-        when (item?.itemId) {
-
-            R.id.menu_setting -> {
-
-                findNavController().navigate(R.id.action_homeFragment_to_settingsFragment)
-            }
-        }
-
-        return false
-    }
 
     private fun showProgressBar() {
 

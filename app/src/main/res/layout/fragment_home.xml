@@ -45,13 +45,13 @@
                     app:layout_constraintTop_toTopOf="parent" />
 
                 <ImageButton
-                    android:id="@+id/menuBtn"
+                    android:id="@+id/settingsBtn"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
                     android:backgroundTint="@android:color/transparent"
                     android:contentDescription="@string/menubutton"
-                    android:src="@drawable/ic_baseline_more_vert_24"
+                    android:src="@drawable/ic_baseline_settings_24"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -66,7 +66,7 @@
                     android:contentDescription="@string/helpbutton"
                     android:src="@drawable/ic_baseline_help_outline_24"
                     app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@+id/menuBtn"
+                    app:layout_constraintEnd_toStartOf="@+id/settingsBtn"
                     app:layout_constraintTop_toTopOf="parent" />
 
             </androidx.constraintlayout.widget.ConstraintLayout>
