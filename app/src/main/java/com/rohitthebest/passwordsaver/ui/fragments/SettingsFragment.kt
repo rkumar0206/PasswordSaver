@@ -3,18 +3,27 @@ package com.rohitthebest.passwordsaver.ui.fragments
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.RadioGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.bottomsheets.BottomSheet
+import com.afollestad.materialdialogs.customview.customView
+import com.afollestad.materialdialogs.customview.getCustomView
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.auth.ktx.auth
@@ -25,7 +34,9 @@ import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentSettingsBinding
 import com.rohitthebest.passwordsaver.databinding.SettingsFragmentLayoutBinding
 import com.rohitthebest.passwordsaver.other.Constants
+import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
 import com.rohitthebest.passwordsaver.other.Constants.ONLINE
+import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
@@ -51,7 +62,9 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
     private lateinit var mAuth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
 
-    private var isradioButtonChangeListenerEnabled = false
+    private var appPassword = ""
+
+    private var isRadioButtonChangeListenerEnabled = false
 
     private var isOnlineModeInitially = false
 
@@ -137,8 +150,10 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
              includeBinding.fingerprintCB.isChecked =
                  it.isFingerprintEnabled == getString(R.string.t)
+
+             appPassword = it.appPassword
          }
-         isradioButtonChangeListenerEnabled = true
+         isRadioButtonChangeListenerEnabled = true
      }
 
      private fun initListeners() {
@@ -165,24 +180,185 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
         if (v?.id == includeBinding.changePasswordIB.id || v?.id == includeBinding.changePasswordTV.id) {
 
-            //todo : open the dialog for changing the password
+            openBottomSheetForChangingPassword()
         }
     }
 
+    private fun openBottomSheetForChangingPassword() {
+
+        MaterialDialog(requireContext(), BottomSheet()).show {
+
+            title(text = "Password change")
+
+            customView(
+                R.layout.dialog_change_password,
+                scrollable = true
+            )
+
+            textWatcher(getCustomView())
+
+            getCustomView().findViewById<Button>(R.id.changePasswordBtn).setOnClickListener {
+
+                if (validateForm(getCustomView())) {
+
+                    appPassword = EncryptData().encryptWithSHA(
+                        getCustomView().findViewById<TextInputLayout>(R.id.newPasswordET).editText?.text.toString()
+                            .trim()
+                    )
+
+                    showToast(
+                        requireContext(),
+                        "Please press save button for saving changes.",
+                        Toast.LENGTH_LONG
+                    )
+
+                    dismiss()
+                }
+            }
+
+        }
+    }
+
+    private fun validateForm(customView: View): Boolean {
+
+        val oldPasswordET = customView.findViewById<TextInputLayout>(R.id.oldPasswordET)
+        val newPasswordET = customView.findViewById<TextInputLayout>(R.id.newPasswordET)
+        val confirmNewPasswordET =
+            customView.findViewById<TextInputLayout>(R.id.confirmNewPasswordET)
+
+        if (oldPasswordET.editText?.text.toString().trim().isEmpty()) {
+
+            oldPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+            return false
+        }
+
+        if (newPasswordET.editText?.text.toString().trim().isEmpty()) {
+
+            newPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+            return false
+        }
+
+        if (confirmNewPasswordET.editText?.text.toString().trim().isEmpty()) {
+
+            confirmNewPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+            return false
+        }
+
+        if (confirmNewPasswordET.editText?.text.toString().trim()
+            != newPasswordET.editText?.text.toString().trim()
+        ) {
+
+            confirmNewPasswordET.error = "It should match with the password written above"
+            return false
+        }
+
+        val encryptedPassword =
+            EncryptData().encryptWithSHA(oldPasswordET.editText?.text.toString().trim())
+
+        if (encryptedPassword != appSetting?.appPassword) {
+
+            oldPasswordET.error = "Password incorrect!!!"
+            return false
+        }
+
+        return oldPasswordET.error == null
+                && newPasswordET.error == null
+                && confirmNewPasswordET.error == null
+    }
+
+    private fun textWatcher(customView: View) {
+
+        val oldPasswordET = customView.findViewById<TextInputLayout>(R.id.oldPasswordET)
+        val newPasswordET = customView.findViewById<TextInputLayout>(R.id.newPasswordET)
+        val confirmNewPasswordET =
+            customView.findViewById<TextInputLayout>(R.id.confirmNewPasswordET)
+
+        oldPasswordET.editText?.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(
+                s: CharSequence?,
+                start: Int,
+                count: Int,
+                after: Int
+            ) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+                if (s?.trim()?.isEmpty()!!) {
+
+                    oldPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+                } else {
+
+                    oldPasswordET.error = null
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        newPasswordET.editText?.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(
+                s: CharSequence?,
+                start: Int,
+                count: Int,
+                after: Int
+            ) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+                if (s?.trim()?.isEmpty()!!) {
+
+                    oldPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+                } else {
+
+                    oldPasswordET.error = null
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        confirmNewPasswordET.editText?.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(
+                s: CharSequence?,
+                start: Int,
+                count: Int,
+                after: Int
+            ) {
+            }
+
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+
+                if (s?.trim()?.isEmpty()!!) {
+
+                    oldPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+                } else {
+
+                    oldPasswordET.error = null
+                }
+            }
+
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+
+    }
 
     override fun onCheckedChanged(radioGroup: RadioGroup?, checkedId: Int) {
 
-        if (isradioButtonChangeListenerEnabled) {
+        if (isRadioButtonChangeListenerEnabled) {
 
             if (isOnlineModeInitially && checkedId == includeBinding.offlineModeRB.id) {
 
+                //todo : change the mode in password database
                 //todo : ask for deletion of password from fireStore
-
             }
 
             if (!isOnlineModeInitially && checkedId == includeBinding.onlineModeRB.id) {
 
-                //also change the secretkey of the saved passwords
+                //todo : change the mode in password database
+                //todo : also change the secret key of the saved passwords
                 //todo : sign in the user and upload all the password to firestore along with app settings
             }
         }
@@ -367,14 +543,14 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                     showToast(requireContext(), "signInWithCredential:success")
 
                     enableSaveBtn()
-                    isradioButtonChangeListenerEnabled = false
+                    isRadioButtonChangeListenerEnabled = false
                     includeBinding.modeChangeRG.check(includeBinding.onlineModeRB.id)
 
                     GlobalScope.launch {
                         delay(200)
                         withContext(Dispatchers.Main) {
 
-                            isradioButtonChangeListenerEnabled = true
+                            isRadioButtonChangeListenerEnabled = true
                         }
                     }
 
@@ -383,7 +559,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                     Log.w(TAG, "signInWithCredential:failure", task.exception)
                     showToast(requireContext(), "Authentication Failed.")
 
-                    isradioButtonChangeListenerEnabled = false
+                    isRadioButtonChangeListenerEnabled = false
                     includeBinding.modeChangeRG.check(includeBinding.offlineModeRB.id)
                     enableSaveBtn()
                     hideProgressBar()
@@ -392,7 +568,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
                         delay(200)
                         withContext(Dispatchers.Main) {
 
-                            isradioButtonChangeListenerEnabled = true
+                            isRadioButtonChangeListenerEnabled = true
                         }
                     }
 
