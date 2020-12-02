@@ -39,8 +39,12 @@ import com.rohitthebest.passwordsaver.other.Constants.ONLINE
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
+import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertAppSettingToJson
+import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.uploadDocumentToFireStore
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
+import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.util.Functions.Companion.show
+import com.rohitthebest.passwordsaver.util.Functions.Companion.showNoInternetMessage
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
@@ -171,6 +175,10 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
             binding.saveBtn.id -> {
 
+                //saving the appSetting database changes leaving the mode changes
+
+                saveAppSettingChanges()
+
                 //todo : save changes
             }
             binding.backBtn.id -> {
@@ -182,6 +190,41 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
             openBottomSheetForChangingPassword()
         }
+    }
+
+    private fun saveAppSettingChanges() {
+
+        //not updating the mode for now
+
+        appSetting?.appPassword = appPassword
+        appSetting?.isFingerprintEnabled = includeBinding.fingerprintCB.isChecked.toString()
+        appSetting?.isPasswordRequiredForDeleting = includeBinding.deleteCB.isChecked.toString()
+
+        if (!isOnlineModeInitially) {
+
+            appSettingViewModel.insert(appSetting!!)
+
+            requireActivity().onBackPressed()
+        } else {
+
+            if (isInternetAvailable(requireContext())) {
+
+                uploadDocumentToFireStore(
+                    requireContext(),
+                    convertAppSettingToJson(appSetting)!!,
+                    getString(R.string.appSetting),
+                    appSetting?.key!!
+                )
+
+                appSettingViewModel.insert(appSetting!!)
+
+                requireActivity().onBackPressed()
+            } else {
+
+                showNoInternetMessage(requireContext())
+            }
+        }
+
     }
 
     private fun openBottomSheetForChangingPassword() {
@@ -309,10 +352,10 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
                 if (s?.trim()?.isEmpty()!!) {
 
-                    oldPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+                    newPasswordET.error = EDITTEXT_EMPTY_MESSAGE
                 } else {
 
-                    oldPasswordET.error = null
+                    newPasswordET.error = null
                 }
             }
 
@@ -332,10 +375,10 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
                 if (s?.trim()?.isEmpty()!!) {
 
-                    oldPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+                    confirmNewPasswordET.error = EDITTEXT_EMPTY_MESSAGE
                 } else {
 
-                    oldPasswordET.error = null
+                    confirmNewPasswordET.error = null
                 }
             }
 
@@ -363,7 +406,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
             }
         }
     }
-
 
     /*private fun deleteDataFromFireStore(it: AppSetting) {
 

@@ -15,7 +15,6 @@ import androidx.core.app.ActivityCompat
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
-import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -45,19 +44,6 @@ class Functions {
         fun showNoInternetMessage(context: Context) {
 
             showToast(context, NO_INTERNET_MESSAGE)
-        }
-
-
-        fun encryptPassword(data: String): String? {
-
-            return try {
-
-                EncryptData().encryptWithSHA(data)
-
-            } catch (e: java.lang.Exception) {
-                e.printStackTrace()
-                ""
-            }
         }
 
         fun showKeyboard(activity: Activity, view: View) {
