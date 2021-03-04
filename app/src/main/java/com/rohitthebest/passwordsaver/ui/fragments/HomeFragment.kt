@@ -61,11 +61,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import java.util.*
 
+private const val TAG = "HomeFragment"
+
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.OnClickListener,
     View.OnClickListener {
-
-    private val TAG = "HomeFragment"
 
     private val viewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
