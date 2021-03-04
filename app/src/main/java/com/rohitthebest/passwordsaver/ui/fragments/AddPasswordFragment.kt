@@ -196,7 +196,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             key = ""
             isSynced = SYNCED
             timeStamp = System.currentTimeMillis()
-            siteLink = "" //todo : add link
+            siteLink = binding.siteLinkET.editText?.text.toString().trim()
         }
 
 
@@ -241,6 +241,8 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             }
 
         }
+
+        Log.d(TAG, "insertToDatabase: password : $password")
 
         showToast(requireContext(), "Password Saved")
     }

@@ -50,6 +50,7 @@
     <string name="onEditClick">onEditClick</string>
     <string name="check_previous_app_setting_message">Checking for previous app settings…</string>
     <string name="use_fingerprint_authentication">Use Fingerprint authentication.</string>
+    <string name="add_site_link_optional">Add site link (Optional)</string>
 
     <string-array name="security_questions">
         <item>"What is the name of your school?"</item>
