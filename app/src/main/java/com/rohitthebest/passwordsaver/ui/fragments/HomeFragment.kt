@@ -52,6 +52,7 @@ import com.rohitthebest.passwordsaver.util.Functions.Companion.getUid
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hideKeyBoard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
+import com.rohitthebest.passwordsaver.util.Functions.Companion.openLinkInBrowser
 import com.rohitthebest.passwordsaver.util.Functions.Companion.show
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showKeyboard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showNoInternetMessage
@@ -437,6 +438,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
             initializeTheFieldsOfBottomSheet(getCustomView(), decryptedPassword)
 
+            if (passwrd?.siteLink == "") {
+
+                getCustomView().findViewById<TextView>(R.id.siteLinkTV).hide()
+            }
+
             getCustomView().findViewById<ImageButton>(R.id.editBtn).setOnClickListener {
 
                 val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
@@ -478,6 +484,14 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
                     copyToClipBoard(requireActivity(), decryptedPassword.toString())
                 }
+
+            getCustomView().findViewById<TextView>(R.id.siteLinkTV).setOnClickListener {
+
+                if (passwrd?.siteLink != "") {
+
+                    openLinkInBrowser(passwrd?.siteLink, requireContext())
+                }
+            }
         }
     }
 
