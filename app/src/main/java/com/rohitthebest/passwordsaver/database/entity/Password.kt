@@ -13,7 +13,8 @@ data class Password(
     var uid: String?,
     var isSynced: String,
     var key: String?,
-    var timeStamp: Long? = System.currentTimeMillis()
+    var timeStamp: Long? = System.currentTimeMillis(),
+    var siteLink: String? = ""
 ) {
 
     @PrimaryKey(autoGenerate = true)
@@ -27,6 +28,7 @@ data class Password(
         "",
         "",
         "",
-        null
+        null,
+        ""
     )
 }

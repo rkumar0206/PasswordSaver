@@ -7,7 +7,7 @@ import com.rohitthebest.passwordsaver.database.entity.Password
 
 @Database(
     entities = [Password::class],
-    version = 1
+    version = 2
 )
 abstract class PasswordDatabase : RoomDatabase() {
 

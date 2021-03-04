@@ -33,10 +33,10 @@ import com.rohitthebest.passwordsaver.util.Functions.Companion.toStringM
 import dagger.hilt.android.AndroidEntryPoint
 import kotlin.random.Random
 
+private const val TAG = "AddPasswordFragment"
+
 @AndroidEntryPoint
 class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnClickListener {
-
-    private val TAG = "AddPasswordFragment"
 
     private val appSettingViewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
@@ -196,6 +196,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             key = ""
             isSynced = SYNCED
             timeStamp = System.currentTimeMillis()
+            siteLink = "" //todo : add link
         }
 
 
@@ -222,16 +223,12 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 //Uploading to firestore
 
-                convertPasswordToJson(password).let { pass ->
-
-                    uploadDocumentToFireStore(
-                        requireContext(),
-                        pass,
-                        getString(R.string.savedPasswords),
-                        password.key!!
-                    )
-
-                }
+                uploadDocumentToFireStore(
+                    requireContext(),
+                    convertPasswordToJson(password),
+                    getString(R.string.savedPasswords),
+                    password.key!!
+                )
 
                 requireActivity().onBackPressed()
 

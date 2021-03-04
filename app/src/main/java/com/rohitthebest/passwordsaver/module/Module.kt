@@ -2,6 +2,8 @@ package com.rohitthebest.passwordsaver.module
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.rohitthebest.passwordsaver.database.databases.AppSettingDatabase
 import com.rohitthebest.passwordsaver.database.databases.PasswordDatabase
 import com.rohitthebest.passwordsaver.other.Constants.APP_SETTING_DATABASE_NAME
@@ -36,6 +38,14 @@ object Module {
 
     //============================= Password Database ===========================
 
+    val migration_1_2 = object : Migration(1, 2) {
+
+        override fun migrate(database: SupportSQLiteDatabase) {
+
+            database.execSQL("ALTER TABLE 'password_table' ADD COLUMN 'siteLink' TEXT DEFAULT ''")
+        }
+    }
+
     @Provides
     @Singleton
     fun providesPasswordDB(
@@ -44,7 +54,9 @@ object Module {
         context,
         PasswordDatabase::class.java,
         PASSWORD_DATABASE_NAME
-    ).build()
+    )
+        .addMigrations(migration_1_2)
+        .build()
 
     @Provides
     @Singleton
