@@ -410,9 +410,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     private fun showPasswordInBottomSheet() {
 
-        val decryptedPassword: String?
-
-        decryptedPassword = try {
+        val decryptedPassword: String? = try {
             EncryptData().decryptAES(
                 passwrd?.password,
                 appSetting?.secretKey
@@ -437,7 +435,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                 scrollable = true
             )
 
-            setCustomViewOfBottomSheet(getCustomView(), decryptedPassword)
+            initializeTheFieldsOfBottomSheet(getCustomView(), decryptedPassword)
 
             getCustomView().findViewById<ImageButton>(R.id.editBtn).setOnClickListener {
 
@@ -554,7 +552,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         }
     }
 
-    private fun setCustomViewOfBottomSheet(customView: View, decryptedPassword: String?) {
+    private fun initializeTheFieldsOfBottomSheet(customView: View, decryptedPassword: String?) {
 
         customView.findViewById<TextView>(R.id.sitenameTV).text = if (passwrd?.siteName == "") {
 
@@ -567,6 +565,8 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         customView.findViewById<TextView>(R.id.usernameTV).text = passwrd?.userName
 
         customView.findViewById<TextView>(R.id.passwordTV).text = decryptedPassword
+
+        customView.findViewById<TextView>(R.id.siteLinkTV).text = passwrd?.siteLink
     }
 
     private fun getCancellationSignal(): CancellationSignal {

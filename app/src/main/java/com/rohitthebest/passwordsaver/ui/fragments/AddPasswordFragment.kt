@@ -117,8 +117,9 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
             binding.userNameET.editText?.setText(it.userName)
             binding.siteNameET.editText?.setText(it.siteName)
+            binding.siteLinkET.editText?.setText(it.siteLink)
 
-            Log.i(TAG, "updateUI: ${it.password}")
+            Log.i(TAG, "updateUI encrypted password: ${it.password}")
             Log.i(
                 TAG, "updateUI: decrypted password : ${
                     EncryptData().decryptAES(
@@ -253,6 +254,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
         receivedPassword?.userName = binding.userNameET.editText?.text.toString().trim()
         receivedPassword?.password =
             encryptPassword(binding.passwordET.editText?.text.toString().trim())
+        receivedPassword?.siteLink = binding.siteLinkET.editText?.text.toString().trim()
 
         if (receivedPassword?.uid == "" || receivedPassword?.isSynced == NOT_SYNCED) {
 
