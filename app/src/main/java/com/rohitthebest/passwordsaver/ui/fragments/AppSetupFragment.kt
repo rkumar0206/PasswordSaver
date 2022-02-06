@@ -5,9 +5,7 @@ import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.os.Bundle
-import android.os.CancellationSignal
 import android.text.Editable
-import android.text.InputType
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
@@ -25,7 +23,9 @@ import com.rohitthebest.passwordsaver.databinding.FragmentAppSetupBinding
 import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
+import com.rohitthebest.passwordsaver.util.Functions
 import com.rohitthebest.passwordsaver.util.Functions.Companion.checkBiometricSupport
+import com.rohitthebest.passwordsaver.util.Functions.Companion.checkForFingerPrintValidation
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hideKeyBoard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import com.rohitthebest.passwordsaver.util.hide
@@ -130,16 +130,16 @@ class AppSetupFragment : Fragment(R.layout.fragment_app_setup), View.OnClickList
 
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 
-                                checkForFingerPrintValidation()
+                                checkFingerPrintValidation()
                             } else {
 
-                                checkForPasswordValidation()
+                                checkPasswordValidation()
                             }
                         } else {
 
                             binding.include.fingerPrintAuthBtn.hide()
                             binding.include.passwordAuthBtn.show()
-                            checkForPasswordValidation()
+                            checkPasswordValidation()
                         }
                     }
 
@@ -152,63 +152,46 @@ class AppSetupFragment : Fragment(R.layout.fragment_app_setup), View.OnClickList
                 e.printStackTrace()
             }
         }
-
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
-    private fun checkForFingerPrintValidation() {
+    private fun checkFingerPrintValidation() {
 
-        /**check for fingerprint validation**/
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 
-        val biometricPrompt = BiometricPrompt.Builder(requireContext())
-            .setTitle("Please use your fingerprint")
-            .setSubtitle("Authentication required")
-            .setDescription("This app has fingerprint protection to keep your password secret.")
-            .setNegativeButton(
-                "Use your password",
-                requireActivity().mainExecutor
-            ) { _, _ ->
+            checkForFingerPrintValidation(
+                requireActivity(),
+                authenticationCallback,
+            ) {
 
-                checkForPasswordValidation()
-            }.build()
+                // On negative button clicked (Use password instead)
+                checkPasswordValidation()
+            }
+        } else {
 
-
-        biometricPrompt.authenticate(
-            getCancellationSignal(),
-            requireActivity().mainExecutor,
-            authenticationCallback
-        )
+            checkPasswordValidation()
+        }
     }
 
-    private fun checkForPasswordValidation() {
+    private fun checkPasswordValidation() {
 
-        MaterialDialog(requireContext()).show {
-
-            title(text = "Password")
-            positiveButton(text = "Confirm")
-            cancelOnTouchOutside(false)
-
-            input(
-                hint = "Enter your password",
-                inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD,
-                allowEmpty = false
-            ) { _, inputString ->
-
-                val encryptPassword = EncryptData().encryptWithSHA(inputString.toString())
-
-                if (encryptPassword == appSetting?.appPassword) {
-
-                    findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
-                } else {
-
-                    showToast(requireContext(), "Password doesn't match!!!")
-                    checkForPasswordValidation()
-                }
+        Functions.checkForPasswordValidation(
+            requireContext(),
+            appSetting!!,
+            "Forgot Password",
+            {
+                // on Success
+                findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
+            }, {
+                // onFailure
+                showToast(requireContext(), "Password doesn't match!!!")
+                checkPasswordValidation()
+            },
+            {
+                // negative button - here on forgot password clicked
+                askForSecurityAnswer()
             }
-        }.negativeButton(text = "Forgot password") {
-
-            askForSecurityAnswer()
-        }
+        )
     }
 
     private fun askForSecurityAnswer() {
@@ -219,7 +202,7 @@ class AppSetupFragment : Fragment(R.layout.fragment_app_setup), View.OnClickList
             positiveButton(text = "Confirm")
             negativeButton(text = "Cancel") {
 
-                checkForPasswordValidation()
+                checkPasswordValidation()
             }
             message(
                 text = EncryptData().decryptAES(
@@ -240,13 +223,12 @@ class AppSetupFragment : Fragment(R.layout.fragment_app_setup), View.OnClickList
                 } else {
 
                     showToast(requireContext(), "Oops!! wrong answer")
-                    checkForPasswordValidation()
+                    checkPasswordValidation()
                 }
             }
         }
 
     }
-
 
     private fun resetPassword() {
 
@@ -256,7 +238,7 @@ class AppSetupFragment : Fragment(R.layout.fragment_app_setup), View.OnClickList
             positiveButton(text = "Reset password")
             negativeButton(text = "Cancel") {
 
-                checkForPasswordValidation()
+                checkPasswordValidation()
             }
 
             input(
@@ -296,20 +278,6 @@ class AppSetupFragment : Fragment(R.layout.fragment_app_setup), View.OnClickList
                 findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
             }
         }
-
-    private var cancellationSignal: CancellationSignal? = null
-
-    private fun getCancellationSignal(): CancellationSignal {
-
-        cancellationSignal = CancellationSignal()
-
-        cancellationSignal?.setOnCancelListener {
-
-            showToast(requireContext(), "Authentication was cancelled")
-        }
-
-        return cancellationSignal as CancellationSignal
-    }
 
     private fun textWatcher() {
 
@@ -418,13 +386,13 @@ class AppSetupFragment : Fragment(R.layout.fragment_app_setup), View.OnClickList
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 
-                    checkForFingerPrintValidation()
+                    checkFingerPrintValidation()
                 }
             }
 
             binding.include.passwordAuthBtn.id -> {
 
-                checkForPasswordValidation()
+                checkPasswordValidation()
             }
 
         }
@@ -466,9 +434,9 @@ class AppSetupFragment : Fragment(R.layout.fragment_app_setup), View.OnClickList
 
         val appSetting = AppSetting(
             encryptedAppPassword,
+            encryptedSecretKey,
             encryptedSecurityQuestion,
             encryptedSecurityAnswer,
-            encryptedSecretKey,
             true,
             isFingerPrintEnabled,
             UUID.randomUUID().toString()

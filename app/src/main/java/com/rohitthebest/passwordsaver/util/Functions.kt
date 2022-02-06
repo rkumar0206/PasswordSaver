@@ -1,6 +1,7 @@
 package com.rohitthebest.passwordsaver.util
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.KeyguardManager
 import android.content.ClipData
@@ -8,13 +9,22 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.biometrics.BiometricPrompt
 import android.net.Uri
+import android.os.Build
+import android.os.CancellationSignal
+import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
+import com.afollestad.materialdialogs.MaterialDialog
+import com.afollestad.materialdialogs.input.input
+import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
+import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -142,6 +152,47 @@ class Functions {
             }
         }
 
+        @RequiresApi(Build.VERSION_CODES.P)
+        inline fun checkForFingerPrintValidation(
+            activity: Activity,
+            authenticationCallback: BiometricPrompt.AuthenticationCallback,
+            crossinline onNegativeBtnClicked: () -> Unit
+        ) {
+
+            /**check for fingerprint validation**/
+
+            val biometricPrompt = BiometricPrompt.Builder(activity)
+                .setTitle("Please use your fingerprint")
+                .setSubtitle("Authentication required")
+                .setDescription("This app has fingerprint protection to keep your password secret.")
+                .setNegativeButton(
+                    "Use your password",
+                    activity.mainExecutor
+                ) { _, _ ->
+
+                    onNegativeBtnClicked()
+
+                }.build()
+
+            biometricPrompt.authenticate(
+                getCancellationSignal(activity),
+                activity.mainExecutor,
+                authenticationCallback
+            )
+        }
+
+        fun getCancellationSignal(context: Context): CancellationSignal {
+
+            val cancellationSignal = CancellationSignal()
+
+            cancellationSignal.setOnCancelListener {
+
+                showToast(context, "Authentication was cancelled")
+            }
+
+            return cancellationSignal
+        }
+
         // for checking the biometric support in a device
         fun checkBiometricSupport(activity: Activity): Boolean {
 
@@ -166,5 +217,46 @@ class Functions {
 
             return activity.packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)
         }
+
+        @SuppressLint("CheckResult")
+        inline fun checkForPasswordValidation(
+            context: Context,
+            appSetting: AppSetting,
+            negativeButtonText: String,
+            crossinline onSuccess: () -> Unit,
+            crossinline onFailure: () -> Unit,
+            crossinline onNegativeButtonClicked: (MaterialDialog) -> Unit
+        ) {
+
+            MaterialDialog(context).show {
+
+                title(text = "Password")
+                positiveButton(text = "Confirm")
+                cancelOnTouchOutside(false)
+
+                input(
+                    hint = "Enter your password",
+                    inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD,
+                    allowEmpty = false
+                ) { _, inputString ->
+
+                    val encryptPassword = EncryptData().encryptWithSHA(inputString.toString())
+
+                    if (encryptPassword == appSetting.appPassword) {
+
+                        onSuccess()
+
+                    } else {
+
+                        onFailure()
+                    }
+                }
+            }.negativeButton(text = negativeButtonText) {
+
+                onNegativeButtonClicked(it)
+            }
+        }
+
+
     }
 }

@@ -4,8 +4,6 @@ import android.annotation.SuppressLint
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.os.Bundle
-import android.os.CancellationSignal
-import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.ImageButton
@@ -21,7 +19,6 @@ import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
-import com.afollestad.materialdialogs.input.input
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
@@ -57,8 +54,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
     private var appSetting: AppSetting? = null
 
     private lateinit var passwordRVAdapter: SavedPasswordRVAdapter
-
-    private var cancellationSignal: CancellationSignal? = null
 
     private var passwrd: Password? = Password()
 
@@ -179,72 +174,54 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 
-                checkForFingerPrintValidation()
+                checkFingerPrintValidation()
             }
         } else {
 
-            checkForPasswordValidation()
+            checkPasswordValidation()
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.P)
-    private fun checkForFingerPrintValidation() {
+    private fun checkFingerPrintValidation() {
 
-        /**check for fingerprint validation**/
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 
-        val biometricPrompt = BiometricPrompt.Builder(requireContext())
-            .setTitle("Please use your fingerprint")
-            .setSubtitle("Authentication required")
-            .setDescription("This app has fingerprint protection to keep your password secret.")
-            .setNegativeButton(
-                "Use your password",
-                requireActivity().mainExecutor
-            ) { _, _ ->
+            Functions.checkForFingerPrintValidation(
+                requireActivity(),
+                authenticationCallback,
+            ) {
 
-                checkForPasswordValidation()
-            }.build()
+                // On negative button clicked (Use password instead)
+                checkPasswordValidation()
+            }
+        } else {
 
-
-        biometricPrompt.authenticate(
-            getCancellationSignal(),
-            requireActivity().mainExecutor,
-            authenticationCallback
-        )
+            checkPasswordValidation()
+        }
     }
 
     private var isPasswordRequiredForDeleting = false
 
-    private fun checkForPasswordValidation() {
+    private fun checkPasswordValidation() {
 
-        MaterialDialog(requireContext()).show {
-
-            title(text = "Password")
-            positiveButton(text = "Confirm")
-            negativeButton(text = "Cancel")
-
-            input(
-                hint = "Enter the app password",
-                inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD,
-                allowEmpty = false
-            ) { _, inputString ->
-
-                val encryptPassword = EncryptData().encryptWithSHA(inputString.toString())
-
-                if (encryptPassword == appSetting?.appPassword) {
-
-                    if (isPasswordRequiredForDeleting) {
-
-                        showDialogForDeletingPassword()
-                    } else {
-
-                        showPasswordInBottomSheet()
-                    }
-                } else {
-
-                    showToast(requireContext(), "Password doesn't match!!!")
-                }
+        Functions.checkForPasswordValidation(
+            requireContext(),
+            appSetting!!,
+            "Cancel",
+            {
+                // on Success
+                showPasswordInBottomSheet()
+            }, {
+                // onFailure
+                showToast(requireContext(), "Password doesn't match!!!")
+                checkPasswordValidation()
+            },
+            {
+                // negative button - cancel
+                it.dismiss()
             }
-        }
+        )
     }
 
     private val authenticationCallback: BiometricPrompt.AuthenticationCallback
@@ -314,7 +291,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                 if (appSetting?.isPasswordRequiredForDeleting == true) {
 
                     isPasswordRequiredForDeleting = true
-                    checkForPasswordValidation()
+                    checkPasswordValidation()
 
                 } else {
 
@@ -405,18 +382,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         customView.findViewById<TextView>(R.id.passwordTV).text = decryptedPassword
 
         customView.findViewById<TextView>(R.id.siteLinkTV).text = passwrd?.siteLink
-    }
-
-    private fun getCancellationSignal(): CancellationSignal {
-
-        cancellationSignal = CancellationSignal()
-
-        cancellationSignal?.setOnCancelListener {
-
-            showToast(requireContext(), "Authentication was cancelled")
-        }
-
-        return cancellationSignal as CancellationSignal
     }
 
     private fun initListeners() {

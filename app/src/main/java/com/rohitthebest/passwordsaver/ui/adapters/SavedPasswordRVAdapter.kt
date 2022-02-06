@@ -32,7 +32,7 @@ class SavedPasswordRVAdapter :
 
                         it.siteName
                     } else {
-                        "Not added"
+                        it.userName
                     }
                     userIdTV.text = it.userName
 
