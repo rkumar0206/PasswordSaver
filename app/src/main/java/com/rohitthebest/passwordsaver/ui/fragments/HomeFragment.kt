@@ -400,6 +400,13 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             requireActivity().onBackPressed()
         }
 
+        binding.toolbar.menu.findItem(R.id.home_menu_password_generator)
+            .setOnMenuItemClickListener {
+
+                findNavController().navigate(R.id.action_homeFragment_to_passwordGeneratorFragment)
+                true
+            }
+
     }
 
     override fun onClick(v: View?) {

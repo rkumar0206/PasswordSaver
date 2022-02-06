@@ -26,6 +26,14 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/fade_out" />
+        <action
+            android:id="@+id/action_homeFragment_to_passwordGeneratorFragment"
+            app:destination="@id/passwordGeneratorFragment"
+
+            app:enterAnim="@anim/fade_in"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/fade_out" />
 
     </fragment>
     <fragment
@@ -48,11 +56,16 @@
         android:id="@+id/appSetupFragment"
         tools:layout="@layout/fragment_app_setup"
         android:name="com.rohitthebest.passwordsaver.ui.fragments.AppSetupFragment"
-        android:label="AppSetupFragment" >
+        android:label="AppSetupFragment">
         <action
             android:id="@+id/action_appSetupFragment_to_homeFragment"
             app:destination="@id/homeFragment"
             app:popUpTo="@id/appSetupFragment"
             app:popUpToInclusive="true" />
     </fragment>
+    <fragment
+        android:id="@+id/passwordGeneratorFragment"
+        android:name="com.rohitthebest.passwordsaver.ui.fragments.PasswordGeneratorFragment"
+        android:label="PasswordGeneratorFragment"
+        tools:layout="@layout/fragment_password_generator" />
 </navigation>

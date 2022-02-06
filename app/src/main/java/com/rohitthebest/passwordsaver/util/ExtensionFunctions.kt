@@ -5,6 +5,7 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.EditText
+import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
@@ -69,6 +70,10 @@ fun TextView.changeTextColor(context: Context, color: Int) {
     this.setTextColor(ContextCompat.getColor(context, color))
 }
 
+fun EditText.getLength(): Int {
+
+    return this.text.toString().trim().length;
+}
 
 fun EditText?.isTextValid(): Boolean {
 
@@ -81,6 +86,20 @@ fun String?.isValid(): Boolean {
             && this.trim().isNotEmpty()
             && this.trim().isNotBlank()
             && this.trim() != "null"
+}
+
+fun String.shuffle(): String {
+
+    val arr = ArrayList<String>()
+
+    this.forEach {
+
+        arr.add(it.toString())
+    }
+
+    arr.shuffle()
+
+    return arr.joinToString("")
 }
 
 inline fun EditText.onTextChangedListener(
@@ -103,6 +122,27 @@ inline fun EditText.onTextChangedListener(
         }
 
         override fun afterTextChanged(s: Editable?) {}
+    })
+
+}
+
+inline fun SeekBar.onProgressChangeListener(
+    crossinline onProgressChanged: (progress: Int) -> Unit
+) {
+    this.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+
+            onProgressChanged(progress)
+        }
+
+        override fun onStartTrackingTouch(seekBar: SeekBar?) {
+
+        }
+
+        override fun onStopTrackingTouch(seekBar: SeekBar?) {
+
+        }
+
     })
 
 }
