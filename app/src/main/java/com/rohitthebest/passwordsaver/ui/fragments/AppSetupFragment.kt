@@ -1,7 +1,6 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
-import android.content.DialogInterface
-import android.content.Intent
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
@@ -11,60 +10,35 @@ import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.RadioGroup
 import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import androidx.navigation.fragment.findNavController
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
-import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.databinding.FragmentAppSetupBinding
 import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
-import com.rohitthebest.passwordsaver.other.Constants.ONLINE
-import com.rohitthebest.passwordsaver.other.Constants.RC_SIGN_IN
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
-import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertAppSettingToJson
-import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.updateDocumentOnFireStore
-import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.uploadDocumentToFireStore
 import com.rohitthebest.passwordsaver.util.Functions.Companion.checkBiometricSupport
-import com.rohitthebest.passwordsaver.util.Functions.Companion.getUid
-import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hideKeyBoard
-import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
-import com.rohitthebest.passwordsaver.util.Functions.Companion.show
-import com.rohitthebest.passwordsaver.util.Functions.Companion.showNoInternetMessage
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
-import com.rohitthebest.passwordsaver.util.Functions.Companion.toStringM
+import com.rohitthebest.passwordsaver.util.hide
+import com.rohitthebest.passwordsaver.util.show
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.random.Random
 
-@AndroidEntryPoint
-class AppSetupFragment : Fragment(), View.OnClickListener,
-    RadioGroup.OnCheckedChangeListener {
+private const val TAG = "AppSetupFragment"
 
-    private val TAG = "AppSetupFragment"
+@SuppressLint("CheckResult")
+@AndroidEntryPoint
+class AppSetupFragment : Fragment(R.layout.fragment_app_setup), View.OnClickListener {
 
     private val appSettingViewModel: AppSettingViewModel by viewModels()
 
@@ -77,27 +51,17 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
     private lateinit var securityQuestionsList: List<String>
     private var securityQuestion: String = ""
 
-    private lateinit var mAuth: FirebaseAuth
-    private lateinit var googleSignInClient: GoogleSignInClient
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-
-        _binding = FragmentAppSetupBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        _binding = FragmentAppSetupBinding.bind(view)
 
         securityQuestionsList = ArrayList()
 
         securityQuestionsList = resources.getStringArray(R.array.security_questions).toList()
 
         securityQuestion = securityQuestionsList[0]
+
         setUpSecurityQuestionSpinner()
 
         getAppSettingData()
@@ -141,17 +105,20 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
     private fun getAppSettingData() {
 
-        appSettingViewModel.getAppSetting().observe(viewLifecycleOwner, Observer {
+        Log.d(TAG, "getAppSettingData: ")
+
+        appSettingViewModel.getAppSetting().observe(viewLifecycleOwner) { setting ->
+
+            Log.d(TAG, "getAppSettingData: $appSetting")
 
             try {
 
-                if (it != null) {
+                if (setting != null) {
 
-                    appSetting = it
+                    appSetting = setting
 
                     binding.include.fingerprintCL.show()
                     binding.include.setupCL.hide()
-
 
                     if (flag) {
 
@@ -184,7 +151,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-        })
+        }
 
     }
 
@@ -199,11 +166,11 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             .setDescription("This app has fingerprint protection to keep your password secret.")
             .setNegativeButton(
                 "Use your password",
-                requireActivity().mainExecutor,
-                DialogInterface.OnClickListener { _, _ ->
+                requireActivity().mainExecutor
+            ) { _, _ ->
 
-                    checkForPasswordValidation()
-                }).build()
+                checkForPasswordValidation()
+            }.build()
 
 
         biometricPrompt.authenticate(
@@ -263,7 +230,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             input(hint = "Your answer here", allowEmpty = false) { _, inputString ->
 
                 if (inputString.toString().trim()
-                        .toLowerCase(Locale.ROOT) == EncryptData().decryptAES(
+                        .lowercase(Locale.ROOT) == EncryptData().decryptAES(
                         appSetting?.securityAnswer,
                         appSetting?.secretKey
                     )
@@ -280,6 +247,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
     }
 
+
     private fun resetPassword() {
 
         MaterialDialog(requireContext()).show {
@@ -292,7 +260,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
             }
 
             input(
-                hint = "Enter new password"
+                hint = "Enter the app password"
             ) { _, charSequence ->
 
                 if (charSequence.toString().trim().isNotEmpty()) {
@@ -303,24 +271,7 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                     appSetting?.appPassword = encryptPassword
 
-                    if (appSetting?.mode != OFFLINE) {
-
-                        val map = HashMap<String, Any?>()
-                        map["appPassword"] = encryptPassword
-
-                        updateDocumentOnFireStore(
-                            requireContext(),
-                            map,
-                            getString(R.string.appSetting),
-                            getUid()!!
-                        )
-
-                        appSettingViewModel.insert(appSetting!!)
-
-                    } else {
-
-                        appSettingViewModel.insert(appSetting!!)
-                    }
+                    appSettingViewModel.insert(appSetting!!)
 
                     showToast(requireContext(), "Password changed")
 
@@ -435,9 +386,6 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
     private fun initListeners() {
 
         binding.nextBtn.setOnClickListener(this)
-        binding.include.modeRG.setOnClickListener(this)
-        binding.include.signInBtn.setOnClickListener(this)
-        binding.include.modeRG.setOnCheckedChangeListener(this)
         binding.include.fingerPrintAuthBtn.setOnClickListener(this)
         binding.include.passwordAuthBtn.setOnClickListener(this)
         binding.nextBtn.setOnClickListener(this)
@@ -460,16 +408,9 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
                 if (validateForm()) {
 
+                    showProgressBar()
+
                     saveAppSettingToDatabase()
-                }
-            }
-
-            binding.include.signInBtn.id -> {
-
-                if (isInternetAvailable(requireContext())) {
-                    signIn()
-                } else {
-                    showNoInternetMessage(requireContext())
                 }
             }
 
@@ -491,25 +432,11 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
     private fun saveAppSettingToDatabase() {
 
-        val mode = when (binding.include.modeRG.checkedRadioButtonId) {
-
-            binding.include.modeOfflineRB.id -> OFFLINE
-
-            else -> ONLINE
-        }
-
-        val encryptedSecretKey = if (mode == OFFLINE) {
-
-            EncryptData().encryptWithSHA(
-                "${System.currentTimeMillis().toStringM(69)}_${
-                    Random.nextLong(100, 9223372036854775).toStringM(69)
-                }"
-            )
-        } else {
-
-            createPasswordFromUserInformation()
-        }
-
+        val encryptedSecretKey = EncryptData().encryptWithSHA(
+            "${UUID.randomUUID()}_${
+                Random.nextLong(100, 9223372036854775).toString(16)
+            }"
+        )
 
         val encryptedAppPassword = EncryptData().encryptWithSHA(
             binding.include.passwordET.editText?.text.toString().trim()
@@ -519,86 +446,40 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
         val encryptedSecurityQuestion =
             EncryptData().encryptWithAES(
-                securityQuestion.toLowerCase(Locale.ROOT),
+                securityQuestion.lowercase(Locale.ROOT),
                 encryptedSecretKey
             )!!
 
         val encryptedSecurityAnswer = EncryptData().encryptWithAES(
             binding.include.securityAnswerET.editText?.text.toString().trim()
-                .toLowerCase(Locale.ROOT), encryptedSecretKey
+                .lowercase(Locale.ROOT), encryptedSecretKey
         )!!
 
         val isFingerPrintEnabled =
             if (!requireActivity().packageManager.hasSystemFeature(PackageManager.FEATURE_FINGERPRINT)) {
 
-                getString(R.string.f)
+                true
             } else {
 
-                if (binding.include.fingerPrintCB.isChecked) {
-
-                    getString(R.string.t)
-                } else {
-
-                    getString(R.string.f)
-                }
-
+                binding.include.fingerPrintCB.isChecked
             }
 
         val appSetting = AppSetting(
-            mode = mode,
-            appPassword = encryptedAppPassword,
-            securityQuestion = encryptedSecurityQuestion,
-            securityAnswer = encryptedSecurityAnswer,
-            uid = getUid(),
-            secretKey = encryptedSecretKey,
-            isPasswordRequiredForDeleting = getString(R.string.t),
-            isFingerprintEnabled = isFingerPrintEnabled,
-            key = getUid()!!
+            encryptedAppPassword,
+            encryptedSecurityQuestion,
+            encryptedSecurityAnswer,
+            encryptedSecretKey,
+            true,
+            isFingerPrintEnabled,
+            UUID.randomUUID().toString()
         )
-
-        if (mode != OFFLINE) {
-
-            //upload to firestore as well as local database
-
-            if (isInternetAvailable(requireContext())) {
-
-                uploadDocumentToFireStore(
-                    requireContext(),
-                    convertAppSettingToJson(appSetting)!!,
-                    getString(R.string.appSetting),
-                    getUid().toString()
-                )
-
-                insertToLocalDatabase(appSetting)
-
-            } else {
-                showNoInternetMessage(requireContext())
-            }
-        } else {
-
-            //saving only to local database
-            insertToLocalDatabase(appSetting)
-        }
-    }
-
-    private fun createPasswordFromUserInformation(): String {
-
-        val user = mAuth.currentUser
-
-        return EncryptData().encryptWithSHA("${user?.displayName}${user?.uid}${user?.email}")
-    }
-
-    private fun insertToLocalDatabase(appSetting: AppSetting) {
 
         flag = false
         appSettingViewModel.insert(appSetting)
-        if (appSetting.mode == OFFLINE && mAuth.currentUser != null) {
 
-            signOut()
-        } else {
+        hideProgressBar()
 
-            findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
-        }
+        findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
     }
 
     private fun validateForm(): Boolean {
@@ -613,29 +494,6 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
 
             binding.include.confirmPasswordET.error = EDITTEXT_EMPTY_MESSAGE
             return false
-        }
-
-        if (binding.include.modeRG.checkedRadioButtonId == binding.include.modeOnlineRB.id) {
-
-            if (mAuth.currentUser == null) {
-
-                Snackbar.make(
-                    binding.appSetupCOORL,
-                    getString(R.string.log_in),
-                    Snackbar.LENGTH_LONG
-                )
-                    .setAction("Log in") {
-
-                        if (isInternetAvailable(requireContext())) {
-                            signIn()
-                        } else {
-                            showNoInternetMessage(requireContext())
-                        }
-                    }
-                    .show()
-
-                return false
-            }
         }
 
         if ((binding.include.confirmPasswordET.editText?.text.toString().trim() !=
@@ -658,160 +516,6 @@ class AppSetupFragment : Fragment(), View.OnClickListener,
                 && (binding.include.confirmPasswordET.editText?.text.toString().trim() ==
                 binding.include.passwordET.editText?.text.toString().trim())
 
-    }
-
-    override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
-
-        when (checkedId) {
-
-            binding.include.modeOfflineRB.id -> {
-
-                binding.include.selectedModeTV.text = getString(R.string.offline_text)
-                binding.include.signInBtn.hide()
-                binding.include.emailTV.hide()
-                hideProgressBar()
-            }
-
-            binding.include.modeOnlineRB.id -> {
-
-                binding.include.selectedModeTV.text = getString(R.string.online_text)
-
-                if (mAuth.currentUser == null) {
-
-                    binding.include.signInBtn.show()
-                } else {
-
-                    showEmailTV()
-                }
-            }
-
-        }
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        mAuth = Firebase.auth
-
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-
-        googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
-    }
-
-    // [START signin]
-    private fun signIn() {
-
-        showProgressBar()
-
-        val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(
-            signInIntent,
-            RC_SIGN_IN
-        )
-    }
-    // [END signin]
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
-        if (requestCode == RC_SIGN_IN) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            try {
-                // Google Sign In was successful, authenticate with Firebase
-                val account = task.getResult(ApiException::class.java)!!
-                Log.d(TAG, "firebaseAuthWithGoogle:" + account.id)
-
-                firebaseAuthWithGoogle(account.idToken!!)
-
-            } catch (e: ApiException) {
-                try {
-                    // Google Sign In failed, update UI appropriately
-                    Log.w(TAG, "Google sign in failed", e)
-                    // [START_EXCLUDE]
-                    showToast(requireContext(), "SignIn Un-successful")
-                    hideProgressBar()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        }
-    }
-
-    private fun firebaseAuthWithGoogle(idToken: String) {
-        // [START_EXCLUDE silent]
-        showProgressBar()
-        // [END_EXCLUDE]
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-
-        try {
-            mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(requireActivity()) { task ->
-                    if (task.isSuccessful) {
-                        // Sign in success, update UI with the signed-in user's information
-                        Log.d(TAG, "signInWithCredential:success")
-
-                        showToast(requireContext(), "SignIn successful")
-                        showEmailTV()
-                    } else {
-                        // If sign in fails, display a message to the user.
-                        Log.w(TAG, "signInWithCredential:failure", task.exception)
-                        showToast(requireContext(), "Authentication Failed.")
-                        hideProgressBar()
-
-                    }
-                    // [START_EXCLUDE]
-                    hideProgressBar()
-                    // [END_EXCLUDE]
-                }
-        } catch (e: Exception) {
-        }
-    }
-
-    private fun signOut() {
-
-        try {
-
-            mAuth.signOut()
-
-            //[Google Sign Out]
-            val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
-                .requestEmail()
-                .build()
-            val googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
-
-            googleSignInClient?.signOut()?.addOnCompleteListener {
-                Log.i(TAG, "Google signOut Successful")
-
-                try {
-
-                    findNavController().navigate(R.id.action_appSetupFragment_to_homeFragment)
-                    binding.include.emailTV.hide()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-            //showToast(requireContext(), "You are signed out")
-            Log.i(TAG, "You are signed out")
-
-        } catch (e: java.lang.Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    private fun showEmailTV() {
-
-        try {
-
-            binding.include.emailTV.text = mAuth.currentUser?.email
-            binding.include.emailTV.show()
-            binding.include.signInBtn.hide()
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
     }
 
     private fun showProgressBar() {

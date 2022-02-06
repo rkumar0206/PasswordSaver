@@ -18,141 +18,17 @@
         tools:visibility="visible">
 
         <androidx.cardview.widget.CardView
-            android:id="@+id/cardView8"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginEnd="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.5"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <TextView
-                    android:id="@+id/textView27"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/mode"
-                    android:textColor="@color/primary_text"
-                    android:textSize="18sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.5"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
-                <View
-                    android:id="@+id/divider29"
-                    android:layout_width="match_parent"
-                    android:layout_height="1dp"
-                    android:layout_marginTop="3dp"
-                    android:background="?android:attr/listDivider"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.5"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/textView27" />
-
-                <Button
-                    android:id="@+id/signInBtn"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="4dp"
-                    android:backgroundTint="@android:color/transparent"
-                    android:text="@string/log_in"
-                    android:textAllCaps="false"
-                    android:textColor="@color/accent"
-                    android:visibility="gone"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="@+id/selectedModeTV"
-                    app:layout_constraintStart_toStartOf="@+id/selectedModeTV"
-                    app:layout_constraintTop_toBottomOf="@+id/selectedModeTV"
-                    tools:visibility="visible" />
-
-                <RadioGroup
-                    android:id="@+id/modeRG"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="5dp"
-                    android:checkedButton="@id/modeOfflineRB"
-                    android:orientation="horizontal"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.5"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/divider29">
-
-                    <RadioButton
-                        android:id="@+id/modeOfflineRB"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="8dp"
-                        android:padding="4dp"
-                        android:text="@string/offline" />
-
-                    <RadioButton
-                        android:id="@+id/modeOnlineRB"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_margin="8dp"
-                        android:padding="4dp"
-                        android:text="@string/online" />
-
-                </RadioGroup>
-
-                <TextView
-                    android:id="@+id/selectedModeTV"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginEnd="16dp"
-                    android:padding="3dp"
-                    android:text="@string/offline_text"
-                    android:textColor="@color/primary_text"
-                    android:textSize="16sp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.5"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/modeRG" />
-
-                <TextView
-                    android:id="@+id/emailTV"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:layout_marginBottom="4dp"
-                    android:ellipsize="end"
-                    android:maxLines="1"
-                    android:padding="5dp"
-                    android:textColor="@color/accent"
-                    android:textSize="16sp"
-                    android:visibility="gone"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="@+id/selectedModeTV"
-                    app:layout_constraintStart_toStartOf="@+id/selectedModeTV"
-                    app:layout_constraintTop_toBottomOf="@+id/selectedModeTV"
-                    tools:visibility="visible" />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-        </androidx.cardview.widget.CardView>
-
-        <androidx.cardview.widget.CardView
             android:id="@+id/cardView10"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
             android:layout_marginEnd="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/cardView8"
-            tools:visibility="gone">
+            app:layout_constraintTop_toTopOf="parent"
+            tools:visibility="visible">
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:layout_width="match_parent"
@@ -163,7 +39,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="Password Setup"
+                    android:text="@string/app_password_setup"
                     android:textColor="@color/black"
                     android:textSize="18sp"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -203,7 +79,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="#FFFFFF"
-                        android:hint="Enter password"
+                        android:hint="@string/enter_app_password"
                         android:inputType="textPassword"
                         android:maxLength="15"
                         android:maxLines="1" />
@@ -229,7 +105,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="#FFFFFF"
-                        android:hint="Confirm Password"
+                        android:hint="@string/confirm_app_password"
                         android:inputType="textPassword"
                         android:maxLength="15"
                         android:maxLines="1" />
@@ -243,7 +119,7 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginEnd="16dp"
                     android:layout_marginBottom="4dp"
-                    android:text="Use fingerprint authentication"
+                    android:text="@string/use_fingerprint_authentication"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.5"
@@ -288,7 +164,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="Select one security question"
+                    android:text="@string/select_one_security_question"
                     android:textColor="@color/primary_text"
                     android:textSize="18sp"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -329,7 +205,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@color/color_white"
-                        android:hint="Your answer"
+                        android:hint="@string/your_answer"
                         android:maxLength="25" />
                 </com.google.android.material.textfield.TextInputLayout>
 

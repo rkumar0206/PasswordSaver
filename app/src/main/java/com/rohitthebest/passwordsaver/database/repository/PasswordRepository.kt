@@ -10,11 +10,11 @@ class PasswordRepository @Inject constructor(
 
     suspend fun insert(password: Password) = dao.insert(password)
 
-    suspend fun delete(password: Password) = dao.delete(password)
+    suspend fun update(password: Password) = dao.update(password)
 
-    suspend fun deleteBySync(isSynced: String) = dao.deleteBySync(isSynced)
+    suspend fun delete(password: Password) = dao.delete(password)
 
     fun getAllPasswords() = dao.getAllPasswordsList()
 
-    fun getPasswordByAccountName(accountName: String) = dao.getPasswordByAccountName(accountName)
+    fun getPasswordByKey(passwordKey: String) = dao.getPasswordByKey(passwordKey)
 }

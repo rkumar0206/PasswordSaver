@@ -1,14 +1,16 @@
 package com.rohitthebest.passwordsaver.ui.viewModels
 
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.repository.AppSettingRepository
-import com.rohitthebest.passwordsaver.other.Constants.APP_SETTING_ID
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class AppSettingViewModel @ViewModelInject constructor(
+@HiltViewModel
+class AppSettingViewModel @Inject constructor(
     var repository: AppSettingRepository
 ) : ViewModel() {
 
@@ -22,6 +24,6 @@ class AppSettingViewModel @ViewModelInject constructor(
         repository.delete(appSetting)
     }
 
-    fun getAppSetting() = repository.getAppSetting()
+    fun getAppSetting() = repository.getAppSetting().asLiveData()
 
 }

@@ -1,9 +1,8 @@
 package com.rohitthebest.passwordsaver.database.dao
 
-import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
-import com.rohitthebest.passwordsaver.other.Constants.APP_SETTING_ID
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface AppSettingDao {
@@ -14,7 +13,7 @@ interface AppSettingDao {
     @Delete
     suspend fun delete(appSetting: AppSetting)
 
-    @Query("SELECT * FROM appSettingsTable")
-    fun getAppSetting(): LiveData<AppSetting>
+    @Query("SELECT * FROM app_setting_table LIMIT 1")
+    fun getAppSetting(): Flow<AppSetting>
 
 }

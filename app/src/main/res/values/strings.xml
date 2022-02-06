@@ -51,6 +51,13 @@
     <string name="check_previous_app_setting_message">Checking for previous app settings…</string>
     <string name="use_fingerprint_authentication">Use Fingerprint authentication.</string>
     <string name="add_site_link_optional">Add site link (Optional)</string>
+    <string name="setup">Setup</string>
+    <string name="search">Search</string>
+    <string name="enter_app_password">Enter app password</string>
+    <string name="confirm_app_password">Confirm app Password</string>
+    <string name="select_one_security_question">Select one security question</string>
+    <string name="your_answer">Your answer</string>
+    <string name="app_password_setup">App password Setup</string>
 
     <string-array name="security_questions">
         <item>"What is the name of your school?"</item>

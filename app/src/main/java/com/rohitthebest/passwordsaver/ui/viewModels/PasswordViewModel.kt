@@ -1,13 +1,16 @@
 package com.rohitthebest.passwordsaver.ui.viewModels
 
-import androidx.hilt.lifecycle.ViewModelInject
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.database.repository.PasswordRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class PasswordViewModel @ViewModelInject constructor(
+@HiltViewModel
+class PasswordViewModel @Inject constructor(
     var repository: PasswordRepository
 ) : ViewModel() {
 
@@ -21,13 +24,13 @@ class PasswordViewModel @ViewModelInject constructor(
         repository.delete(password)
     }
 
-    fun deleteBySync(isSynced: String) = viewModelScope.launch {
-
-        repository.deleteBySync(isSynced)
+    fun update(password: Password) = viewModelScope.launch {
+        repository.update(password)
     }
 
-    fun getAllPasswordsList() = repository.getAllPasswords()
+    fun getAllPasswordsList() = repository.getAllPasswords().asLiveData()
 
-    fun getPasswordByAccountName(accountName: String) =
-        repository.getPasswordByAccountName(accountName)
+    fun getPasswordByKey(passwordKey: String) =
+        repository.getPasswordByKey(passwordKey).asLiveData()
+
 }

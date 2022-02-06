@@ -7,7 +7,8 @@ import com.rohitthebest.passwordsaver.database.entity.AppSetting
 
 @Database(
     entities = [AppSetting::class],
-    version = 2
+    version = 1,
+    exportSchema = false
 )
 abstract class AppSettingDatabase : RoomDatabase() {
 

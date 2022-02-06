@@ -1,68 +1,49 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
-import android.content.Context
-import android.content.DialogInterface
+import android.annotation.SuppressLint
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.os.Bundle
 import android.os.CancellationSignal
 import android.text.InputType
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.ImageButton
-import android.widget.SearchView
 import android.widget.TextView
 import androidx.annotation.RequiresApi
+import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
 import com.afollestad.materialdialogs.input.input
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.firestore.FirebaseFirestore
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentHomeBinding
-import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
-import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
-import com.rohitthebest.passwordsaver.other.Constants.ONLINE
-import com.rohitthebest.passwordsaver.other.Constants.SHARED_PREFERENCE_KEY
-import com.rohitthebest.passwordsaver.other.Constants.SHARED_PREFERENCE_NAME
-import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.adapters.SavedPasswordRVAdapter
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
-import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertPasswordToJson
-import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper
-import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.deleteDocumentFromFireStore
-import com.rohitthebest.passwordsaver.util.Functions.Companion.closeKeyboard
+import com.rohitthebest.passwordsaver.util.*
 import com.rohitthebest.passwordsaver.util.Functions.Companion.copyToClipBoard
-import com.rohitthebest.passwordsaver.util.Functions.Companion.getUid
-import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hideKeyBoard
-import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.util.Functions.Companion.openLinkInBrowser
-import com.rohitthebest.passwordsaver.util.Functions.Companion.show
-import com.rohitthebest.passwordsaver.util.Functions.Companion.showKeyboard
-import com.rohitthebest.passwordsaver.util.Functions.Companion.showNoInternetMessage
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
 
 private const val TAG = "HomeFragment"
 
+@SuppressLint("CheckResult")
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.OnClickListener,
     View.OnClickListener {
@@ -75,215 +56,111 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     private var appSetting: AppSetting? = null
 
-    private lateinit var mAdapter: SavedPasswordRVAdapter
+    private lateinit var passwordRVAdapter: SavedPasswordRVAdapter
 
     private var cancellationSignal: CancellationSignal? = null
 
-    private var isSearchViewVisible = false
-
     private var passwrd: Password? = Password()
-
-    private var isSyncedFromCloud = false
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-
-        return binding.root
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mAdapter = SavedPasswordRVAdapter()
+        _binding = FragmentHomeBinding.bind(view)
 
-        loadData()
-
-        if (!isSyncedFromCloud) {
-
-            syncPasswordFromCloud()
-        }
+        passwordRVAdapter = SavedPasswordRVAdapter()
 
         getAppSetting()
 
         showProgressBar()
-        GlobalScope.launch {
+
+        setUpRecyclerView()
+
+        lifecycleScope.launch {
 
             delay(350)
-            withContext(Dispatchers.Main) {
-
-                getAllSavedPassword()
-            }
+            getAllSavedPassword()
         }
 
         initListeners()
-    }
 
-    private fun syncPasswordFromCloud() {
-
-        showProgressBar()
-
-        if (appSetting?.mode != OFFLINE) {
-
-            if (isInternetAvailable(requireContext())) {
-
-                FirebaseFirestore.getInstance()
-                    .collection(getString(R.string.savedPasswords))
-                    .whereEqualTo("uid", getUid())
-                    .get()
-                    .addOnSuccessListener {
-
-                        if (!it.isEmpty) {
-
-                            for (p in it) {
-
-                                val password = p.toObject(Password::class.java)
-
-                                passwordViewModel.insert(password)
-                            }
-                        }
-
-                        isSyncedFromCloud = true
-
-                        saveData()
-
-                        hideProgressBar()
-                    }
-                    .addOnFailureListener {
-
-                        showToast(requireContext(), it.toString())
-                        hideProgressBar()
-                    }
-
-            } else {
-
-                showNoInternetMessage(requireContext())
-            }
-        } else {
-
-            isSyncedFromCloud = true
-            saveData()
-        }
-    }
-
-    private fun saveData() {
-
-        val sharedPreference =
-            requireActivity().getSharedPreferences(SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE)
-
-        val editor = sharedPreference.edit()
-
-        editor.putBoolean(SHARED_PREFERENCE_KEY, isSyncedFromCloud)
-
-        editor.apply()
-    }
-
-    private fun loadData() {
-
-        val sharedPreference =
-            requireActivity().getSharedPreferences(SHARED_PREFERENCE_NAME, Context.MODE_PRIVATE)
-
-        try {
-
-            isSyncedFromCloud = sharedPreference.getBoolean(SHARED_PREFERENCE_KEY, false)
-
-        } catch (e: java.lang.Exception) {
-            e.printStackTrace()
-        }
     }
 
     private fun getAppSetting() {
 
-        viewModel.getAppSetting().observe(viewLifecycleOwner, Observer {
+        viewModel.getAppSetting().observe(viewLifecycleOwner) {
 
             if (it != null) {
 
                 appSetting = it
             }
-        })
+        }
     }
 
     private fun getAllSavedPassword() {
 
         try {
 
-            passwordViewModel.getAllPasswordsList().observe(viewLifecycleOwner, Observer {
+            passwordViewModel.getAllPasswordsList().observe(viewLifecycleOwner) { passwords ->
 
-                if (it.isNotEmpty()) {
+                if (passwords.isNotEmpty()) {
 
                     hideNoPassTV()
 
-                    setUpSearchView(it)
+                    setUpSearchView(passwords)
                 } else {
 
                     showNoPassTV()
                 }
 
-                setUpRecyclerView(it)
-            })
+                passwordRVAdapter.submitList(passwords)
+            }
 
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    private fun setUpSearchView(it: List<Password>?) {
+    private fun setUpSearchView(passwords: List<Password>) {
 
-        binding.searchView.setOnQueryTextListener(object :
-            SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(p0: String?): Boolean {
-                return false
-            }
+        val searchView =
+            binding.toolbar.menu.findItem(R.id.home_menu_search).actionView as SearchView
 
-            override fun onQueryTextChange(newText: String?): Boolean {
-                try {
-                    newText?.let { newTxt ->
+        searchView.searchText { newText ->
 
-                        if (newTxt.trim().isEmpty()) {
+            newText?.let { newTxt ->
 
-                            setUpRecyclerView(it)
-                        } else {
+                if (newTxt.trim().isEmpty()) {
 
-                            val filteredList = it?.filter { passwrd ->
+                    passwordRVAdapter.submitList(passwords)
+                } else {
 
-                                passwrd.userName?.toLowerCase(Locale.ROOT)!!
-                                    .contains(newTxt.toLowerCase(Locale.ROOT)) ||
-                                        passwrd.siteName?.toLowerCase(Locale.ROOT)!!
-                                            .contains(newTxt.toLowerCase(Locale.ROOT))
-                            }
+                    val filteredList = passwords.filter { passwrd ->
 
-                            setUpRecyclerView(filteredList)
-                        }
+                        passwrd.userName.lowercase(Locale.ROOT)
+                            .contains(newTxt.lowercase(Locale.ROOT)) ||
+                                passwrd.siteName.lowercase(Locale.ROOT)
+                                    .contains(newTxt.lowercase(Locale.ROOT))
                     }
-                } catch (e: java.lang.Exception) {
-                    e.printStackTrace()
+
+                    passwordRVAdapter.submitList(filteredList)
                 }
-                return false
             }
-        })
+
+        }
     }
 
-    private fun setUpRecyclerView(passwordList: List<Password>?) {
+    private fun setUpRecyclerView() {
 
         try {
 
-            passwordList?.let {
+            binding.savedPasswordRV.apply {
 
-                mAdapter.submitList(it)
-
-                binding.savedPasswordRV.apply {
-
-                    layoutManager = LinearLayoutManager(requireContext())
-                    setHasFixedSize(true)
-                    adapter = mAdapter
-
-                }
-                mAdapter.setOnClickListener(this)
+                layoutManager = LinearLayoutManager(requireContext())
+                setHasFixedSize(true)
+                adapter = passwordRVAdapter
+                changeVisibilityOfFABOnScrolled(binding.addPasswordFAB)
             }
+            passwordRVAdapter.setOnClickListener(this)
 
             hideProgressBar()
 
@@ -292,13 +169,13 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         }
     }
 
-    override fun onItemClickListener(password: Password?) {
+    override fun onItemClick(password: Password?) {
 
         passwrd = password
 
         isPasswordRequiredForDeleting = false
 
-        if (appSetting?.isFingerprintEnabled == getString(R.string.t)) {
+        if (appSetting?.isFingerprintEnabled == true) {
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
 
@@ -307,28 +184,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         } else {
 
             checkForPasswordValidation()
-        }
-    }
-
-    override fun onSyncBtnClickListener(password: Password?) {
-
-        if (password?.isSynced == NOT_SYNCED) {
-
-            password.isSynced = SYNCED
-
-            FirebaseServiceHelper.uploadDocumentToFireStore(
-                requireContext(),
-                convertPasswordToJson(password),
-                getString(R.string.savedPasswords),
-                password.key!!
-            )
-
-            showToast(requireContext(), "Password synced")
-
-            passwordViewModel.insert(password)
-        } else {
-
-            showToast(requireContext(), "Already synced")
         }
     }
 
@@ -343,11 +198,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             .setDescription("This app has fingerprint protection to keep your password secret.")
             .setNegativeButton(
                 "Use your password",
-                requireActivity().mainExecutor,
-                DialogInterface.OnClickListener { _, _ ->
+                requireActivity().mainExecutor
+            ) { _, _ ->
 
-                    checkForPasswordValidation()
-                }).build()
+                checkForPasswordValidation()
+            }.build()
 
 
         biometricPrompt.authenticate(
@@ -368,7 +223,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             negativeButton(text = "Cancel")
 
             input(
-                hint = "Enter your password",
+                hint = "Enter the app password",
                 inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD,
                 allowEmpty = false
             ) { _, inputString ->
@@ -446,7 +301,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             getCustomView().findViewById<ImageButton>(R.id.editBtn).setOnClickListener {
 
                 val action = HomeFragmentDirections.actionHomeFragmentToAddPasswordFragment(
-                    convertPasswordToJson(passwrd)
+                    passwrd?.key
                 )
 
                 findNavController().navigate(action)
@@ -456,7 +311,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
             getCustomView().findViewById<ImageButton>(R.id.deleteBtn).setOnClickListener {
 
-                if (appSetting?.isPasswordRequiredForDeleting == getString(R.string.t)) {
+                if (appSetting?.isPasswordRequiredForDeleting == true) {
 
                     isPasswordRequiredForDeleting = true
                     checkForPasswordValidation()
@@ -502,19 +357,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             .setMessage("After deleting you will lose this password.")
             .setPositiveButton("DELETE") { dialog, _ ->
 
-                if (passwrd?.mode == OFFLINE || (passwrd?.mode == ONLINE && passwrd?.isSynced == NOT_SYNCED)) {
-
-                    deletePassword(passwrd!!)
-                } else {
-
-                    if (isInternetAvailable(requireContext())) {
-
-                        deletePassword(passwrd!!)
-                    } else {
-
-                        showNoInternetMessage(requireContext())
-                    }
-                }
+                deletePassword(passwrd!!)
                 dialog.dismiss()
             }
             .setNegativeButton("Cancel") { dialog, _ ->
@@ -530,36 +373,17 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         try {
 
-            var isUndoClicked = false
-
             passwordViewModel.delete(password)
 
-            Snackbar.make(
-                binding.homeFragCoordinatorLayout,
+            binding.root.showSnackBarWithActionAndDismissListener(
                 "Password deleted",
-                Snackbar.LENGTH_LONG
-            )
-                .setAction("Undo") {
-
+                "Undo",
+                {
                     passwordViewModel.insert(password)
                     showToast(requireContext(), "Password restored")
-                    isUndoClicked = true
-                }
-                .addCallback(object : Snackbar.Callback() {
-
-                    override fun onDismissed(transientBottomBar: Snackbar?, event: Int) {
-
-                        if (!isUndoClicked && (password.mode != OFFLINE || (passwrd?.mode == ONLINE && password.isSynced != NOT_SYNCED))) {
-
-                            deleteDocumentFromFireStore(
-                                requireContext(),
-                                getString(R.string.savedPasswords),
-                                password.key!!
-                            )
-                        }
-                    }
-                })
-                .show()
+                },
+                {}
+            )
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -599,29 +423,18 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         binding.addPasswordFAB.setOnClickListener(this)
         binding.homeFragCoordinatorLayout.setOnClickListener(this)
-        binding.settingsBtn.setOnClickListener(this)
-        binding.helpBtn.setOnClickListener(this)
-        binding.searchBtn.setOnClickListener(this)
 
-        binding.savedPasswordRV.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+        binding.toolbar.menu.findItem(R.id.home_menu_settings).setOnMenuItemClickListener {
 
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                super.onScrolled(recyclerView, dx, dy)
+            findNavController().navigate(R.id.action_homeFragment_to_settingsFragment)
+            true
+        }
 
-                try {
-                    if (dy > 0 && binding.addPasswordFAB.visibility == View.VISIBLE) {
+        binding.toolbar.setNavigationOnClickListener {
 
-                        binding.addPasswordFAB.hide()
-                    } else if (dy < 0 && binding.addPasswordFAB.visibility != View.VISIBLE) {
+            requireActivity().onBackPressed()
+        }
 
-                        binding.addPasswordFAB.show()
-
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-            }
-        })
     }
 
     override fun onClick(v: View?) {
@@ -632,66 +445,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
                 findNavController().navigate(R.id.action_homeFragment_to_addPasswordFragment)
             }
-
-            binding.searchBtn.id -> {
-
-                if (!isSearchViewVisible) {
-
-                    showSearchView()
-                } else {
-
-                    hideSearchView()
-                }
-            }
-
-            binding.settingsBtn.id -> {
-
-                findNavController().navigate(R.id.action_homeFragment_to_settingsFragment)
-            }
-
-            binding.helpBtn.id -> {
-
-                findNavController().navigate(R.id.action_homeFragment_to_helpFragment)
-            }
         }
 
-        CoroutineScope(Dispatchers.IO).launch {
-
-            closeKeyboard(requireActivity())
-        }
+        hideKeyBoard(requireActivity())
     }
-
-    private fun showSearchView() {
-
-        isSearchViewVisible = !isSearchViewVisible
-
-        binding.searchView.show()
-        binding.searchView.animate().translationY(0f).alpha(1f).setDuration(350).start()
-
-        binding.searchView.requestFocus()
-
-        showKeyboard(requireActivity(), binding.searchView)
-    }
-
-    private fun hideSearchView() {
-
-        isSearchViewVisible = !isSearchViewVisible
-
-        binding.searchView.animate().translationY(-50f).alpha(0f).setDuration(350).start()
-
-        GlobalScope.launch {
-
-            delay(360)
-
-            hideKeyBoard(requireActivity())
-            withContext(Dispatchers.Main) {
-
-                binding.searchView.hide()
-                binding.searchView.setQuery("", true)
-            }
-        }
-    }
-
 
     private fun showProgressBar() {
 
@@ -714,30 +471,28 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     private fun showNoPassTV() {
 
-        binding.noPassAddedTV.visibility = View.VISIBLE
-        binding.savedPasswordRV.visibility = View.GONE
+        binding.noPassAddedTV.show()
+        binding.savedPasswordRV.hide()
     }
 
     private fun hideNoPassTV() {
 
-        binding.noPassAddedTV.visibility = View.GONE
-        binding.savedPasswordRV.visibility = View.VISIBLE
+        binding.noPassAddedTV.hide()
+        binding.savedPasswordRV.show()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
 
-        _binding = null
-
         try {
 
-            CoroutineScope(Dispatchers.IO).launch {
+            hideKeyBoard(requireActivity())
 
-                closeKeyboard(requireActivity())
-            }
-
-        } catch (e: Exception) {
+        } catch (e: IllegalStateException) {
             e.printStackTrace()
         }
+
+        _binding = null
+
     }
 }

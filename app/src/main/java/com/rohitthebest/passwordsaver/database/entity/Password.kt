@@ -2,18 +2,15 @@ package com.rohitthebest.passwordsaver.database.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
 
 @Entity(tableName = "password_table")
 data class Password(
-    var siteName: String? = "",
-    var userName: String?,
-    var password: String?,
-    var mode: String = OFFLINE,
-    var uid: String?,
-    var isSynced: String,
-    var key: String?,
-    var timeStamp: Long? = System.currentTimeMillis(),
+    var created: Long = System.currentTimeMillis(),
+    var modified: Long = System.currentTimeMillis(),
+    var siteName: String = "",
+    var userName: String,
+    var password: String,
+    var key: String,
     var siteLink: String? = ""
 ) {
 
@@ -21,14 +18,12 @@ data class Password(
     var id: Int? = null
 
     constructor() : this(
+        System.currentTimeMillis(),
+        System.currentTimeMillis(),
         "",
         "",
         "",
-        OFFLINE,
         "",
-        "",
-        "",
-        null,
         ""
     )
 }

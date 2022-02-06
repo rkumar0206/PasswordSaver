@@ -14,11 +14,9 @@ import android.view.View
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -27,7 +25,6 @@ class Functions {
     companion object {
 
         private const val TAG = "Functions"
-        private val mAuth = Firebase.auth
 
         fun showToast(context: Context, message: String, duration: Int = Toast.LENGTH_SHORT) {
             try {
@@ -64,8 +61,9 @@ class Functions {
 
             try {
 
-                GlobalScope.launch {
+                CoroutineScope(Dispatchers.Main).launch {
 
+                    Log.i(TAG, "Function: hideKeyboard")
                     closeKeyboard(activity)
                 }
 
@@ -88,16 +86,6 @@ class Functions {
 
         }
 
-        fun getUid(): String? {
-
-            if (mAuth.currentUser == null) {
-
-                return ""
-            }
-
-            return mAuth.currentUser?.uid
-        }
-
         suspend fun closeKeyboard(activity: Activity) {
             try {
                 withContext(Dispatchers.IO) {
@@ -116,123 +104,6 @@ class Functions {
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
             }
-        }
-
-        fun View.show() {
-
-            try {
-                this.visibility = View.VISIBLE
-
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-
-
-        fun View.hide() {
-
-            try {
-                this.visibility = View.GONE
-
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-
-        fun Long.toStringM(radix: Int = 0): String {
-
-            val values = arrayOf(
-                "0",
-                "1",
-                "2",
-                "3",
-                "4",
-                "5",
-                "6",
-                "7",
-                "8",
-                "9",
-                "a",
-                "b",
-                "c",
-                "d",
-                "e",
-                "f",
-                "g",
-                "h",
-                "i",
-                "j",
-                "k",
-                "l",
-                "m",
-                "n",
-                "o",
-                "p",
-                "q",
-                "r",
-                "s",
-                "t",
-                "u",
-                "v",
-                "w",
-                "x",
-                "y",
-                "z",
-                "A",
-                "B",
-                "C",
-                "D",
-                "E",
-                "F",
-                "G",
-                "H",
-                "I",
-                "J",
-                "K",
-                "L",
-                "M",
-                "N",
-                "O",
-                "P",
-                "Q",
-                "R",
-                "S",
-                "T",
-                "U",
-                "V",
-                "W",
-                "X",
-                "Y",
-                "Z",
-                "!",
-                "@",
-                "#",
-                "$",
-                "%",
-                "^",
-                "&"
-            )
-            var str = ""
-            var d = this
-            var r: Int
-
-            if (radix in 1..69) {
-
-                if (d <= 0) {
-                    return d.toString()
-                }
-
-                while (d != 0L) {
-
-                    r = (d % radix).toInt()
-                    d /= radix
-                    str = values[r] + str
-                }
-
-                return str
-            }
-
-            return d.toString()
         }
 
         private fun checkUrl(url: String): String {

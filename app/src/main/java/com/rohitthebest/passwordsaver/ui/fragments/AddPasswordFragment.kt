@@ -4,34 +4,22 @@ import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentAddPasswordBinding
 import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.NOT_SYNCED
-import com.rohitthebest.passwordsaver.other.Constants.OFFLINE
-import com.rohitthebest.passwordsaver.other.Constants.SYNCED
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import com.rohitthebest.passwordsaver.util.CheckPasswordPattern
-import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertFromJsonToPassword
-import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertPasswordToJson
-import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.uploadDocumentToFireStore
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hideKeyBoard
-import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
-import com.rohitthebest.passwordsaver.util.Functions.Companion.toStringM
 import dagger.hilt.android.AndroidEntryPoint
-import kotlin.random.Random
+import java.util.*
 
 private const val TAG = "AddPasswordFragment"
 
@@ -47,26 +35,34 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
     private var appSetting: AppSetting? = null
 
     private var isForEditing = false
-    private var receivedPassword: Password? = null
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-
-        _binding = FragmentAddPasswordBinding.inflate(inflater, container, false)
-        return binding.root
-    }
+    private lateinit var receivedPassword: Password
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        _binding = FragmentAddPasswordBinding.bind(view)
 
         getAppSetting()
 
         initListeners()
         textWatcher()
     }
+
+    private fun getAppSetting() {
+
+        try {
+
+            appSettingViewModel.getAppSetting().observe(viewLifecycleOwner) { setting ->
+
+                appSetting = setting
+
+                getMessage()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
 
     private fun getMessage() {
 
@@ -80,50 +76,43 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 val message = args?.editPasswordMessage
 
-                receivedPassword = convertFromJsonToPassword(message)
-
-                Log.i("AddPasswordFrag", "${receivedPassword?.password}")
-                Log.i("AddPasswordFrag", "${receivedPassword?.userName}")
-
                 isForEditing = true
 
-                updateUI()
+                getReceivedPassword(message)
             }
         } catch (e: java.lang.Exception) {
             e.printStackTrace()
         }
     }
 
-    private fun getAppSetting() {
+    private fun getReceivedPassword(passwordKey: String?) {
 
-        try {
+        passwordKey?.let {
 
-            appSettingViewModel.getAppSetting().observe(viewLifecycleOwner, Observer {
+            passwordViewModel.getPasswordByKey(passwordKey)
+                .observe(viewLifecycleOwner) { password ->
 
-                appSetting = it
-
-                getMessage()
-            })
-        } catch (e: Exception) {
-            e.printStackTrace()
+                    receivedPassword = password
+                    updateUI()
+                }
         }
     }
 
     private fun updateUI() {
 
-        receivedPassword?.let {
+        binding.titleTV.text = getString(R.string.editPassword)
 
-            binding.titleTV.text = getString(R.string.editPassword)
+        if (::receivedPassword.isInitialized) {
 
-            binding.userNameET.editText?.setText(it.userName)
-            binding.siteNameET.editText?.setText(it.siteName)
-            binding.siteLinkET.editText?.setText(it.siteLink)
+            binding.userNameET.editText?.setText(receivedPassword.userName)
+            binding.siteNameET.editText?.setText(receivedPassword.siteName)
+            binding.siteLinkET.editText?.setText(receivedPassword.siteLink)
 
-            Log.i(TAG, "updateUI encrypted password: ${it.password}")
+            Log.i(TAG, "updateUI encrypted password: ${receivedPassword.password}")
             Log.i(
                 TAG, "updateUI: decrypted password : ${
                     EncryptData().decryptAES(
-                        it.password,
+                        receivedPassword.password,
                         appSetting?.secretKey
                     )
                 }"
@@ -131,13 +120,14 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             try {
                 binding.passwordET.editText?.setText(
                     EncryptData().decryptAES(
-                        it.password,
+                        receivedPassword.password,
                         appSetting?.secretKey
                     )
                 )
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
             }
+
         }
     }
 
@@ -156,13 +146,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
 
                 if (validateForm()) {
 
-                    if (isForEditing) {
-
-                        updatePassword(receivedPassword)
-                    } else {
-
-                        insertToDatabase()
-                    }
+                    savePasswordToDatabase()
                 }
             }
 
@@ -176,118 +160,44 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
         hideKeyBoard(requireActivity())
     }
 
-    private fun insertToDatabase() {
+    private fun savePasswordToDatabase() {
 
-        val encryptedPassword: String? =
+        val encryptedPassword =
             encryptPassword(binding.passwordET.editText?.text.toString().trim())
 
-        val password = Password()
+        if (isForEditing) {
 
-        password.apply {
+            // update password
 
-            siteName = if (binding.siteNameET.editText?.text.toString().trim().isNotEmpty()) {
-                binding.siteNameET.editText?.text.toString().trim()
-            } else {
-                ""
-            }
-            mode = appSetting?.mode!!
-            userName = binding.userNameET.editText?.text.toString().trim()
-            this.password = encryptedPassword
-            uid = ""
-            key = ""
-            isSynced = SYNCED
-            timeStamp = System.currentTimeMillis()
-            siteLink = binding.siteLinkET.editText?.text.toString().trim()
-        }
+            receivedPassword.modified = System.currentTimeMillis()
+            receivedPassword.userName = binding.userNameET.editText?.text.toString().trim()
+            receivedPassword.password = encryptedPassword ?: ""
+            receivedPassword.siteLink = binding.siteLinkET.editText?.text.toString().trim()
 
+            passwordViewModel.update(receivedPassword)
 
-        if (appSetting?.mode == OFFLINE) {
-
-            passwordViewModel.insert(password)
-            requireActivity().onBackPressed()
         } else {
 
-            password.uid = appSetting?.uid
+            // insert new password
 
-            password.key = "${System.currentTimeMillis().toStringM(69)}_${
-                Random.nextLong(
-                    100,
-                    9223372036854775
-                ).toStringM(69)
-            }_${password.uid}"
+            val password = Password(
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                binding.siteNameET.editText?.text.toString().trim(),
+                binding.userNameET.editText?.text.toString().trim(),
+                encryptedPassword ?: "",
+                UUID.randomUUID().toString(),
+                binding.siteLinkET.editText?.text.toString().trim()
+            )
 
-            if (isInternetAvailable(requireContext())) {
-
-                password.isSynced = SYNCED
-
-                passwordViewModel.insert(password)
-
-                //Uploading to firestore
-
-                uploadDocumentToFireStore(
-                    requireContext(),
-                    convertPasswordToJson(password),
-                    getString(R.string.savedPasswords),
-                    password.key!!
-                )
-
-                requireActivity().onBackPressed()
-
-            } else {
-
-                password.isSynced = NOT_SYNCED
-                passwordViewModel.insert(password)
-
-                requireActivity().onBackPressed()
-            }
+            passwordViewModel.insert(password)
 
         }
 
-        Log.d(TAG, "insertToDatabase: password : $password")
-
+        requireActivity().onBackPressed()
         showToast(requireContext(), "Password Saved")
     }
 
-    private fun updatePassword(receivedPassword: Password?) {
-
-        receivedPassword?.siteName = binding.siteNameET.editText?.text.toString().trim()
-        receivedPassword?.userName = binding.userNameET.editText?.text.toString().trim()
-        receivedPassword?.password =
-            encryptPassword(binding.passwordET.editText?.text.toString().trim())
-        receivedPassword?.siteLink = binding.siteLinkET.editText?.text.toString().trim()
-
-        if (receivedPassword?.uid == "" || receivedPassword?.isSynced == NOT_SYNCED) {
-
-            passwordViewModel.insert(receivedPassword)
-
-            showToast(requireContext(), "Password updated")
-
-            requireActivity().onBackPressed()
-        } else {
-
-            if (isInternetAvailable(requireContext())) {
-
-                receivedPassword?.let { passwordViewModel.insert(it) }
-
-                uploadDocumentToFireStore(
-                    requireContext(),
-                    convertPasswordToJson(receivedPassword),
-                    getString(R.string.savedPasswords),
-                    receivedPassword?.key!!
-                )
-
-                showToast(requireContext(), "Password updated")
-                requireActivity().onBackPressed()
-            } else {
-
-                showToast(
-                    requireContext(),
-                    "In Online mode you need to have an active internet connection for editing your password.",
-                    Toast.LENGTH_LONG
-                )
-            }
-        }
-    }
 
     private fun encryptPassword(password: String): String? {
 

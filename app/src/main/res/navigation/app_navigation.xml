@@ -26,14 +26,6 @@
             app:exitAnim="@anim/slide_out_left"
             app:popEnterAnim="@anim/slide_in_left"
             app:popExitAnim="@anim/fade_out" />
-        <action
-            android:id="@+id/action_homeFragment_to_helpFragment"
-            app:destination="@id/helpFragment"
-
-            app:enterAnim="@anim/fade_in"
-            app:exitAnim="@anim/slide_out_left"
-            app:popEnterAnim="@anim/slide_in_left"
-            app:popExitAnim="@anim/fade_out" />
 
     </fragment>
     <fragment
@@ -51,11 +43,6 @@
         android:name="com.rohitthebest.passwordsaver.ui.fragments.SettingsFragment"
         android:label="fragment_settings"
         tools:layout="@layout/fragment_settings" />
-    <fragment
-        android:id="@+id/helpFragment"
-        android:name="com.rohitthebest.passwordsaver.ui.fragments.HelpFragment"
-        android:label="fragment_help"
-        tools:layout="@layout/fragment_help" />
 
     <fragment
         android:id="@+id/appSetupFragment"

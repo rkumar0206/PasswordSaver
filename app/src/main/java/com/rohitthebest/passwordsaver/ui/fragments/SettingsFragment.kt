@@ -1,58 +1,35 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
-import android.app.Activity
-import android.content.Intent
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.Button
-import android.widget.RadioGroup
 import android.widget.Toast
+import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.Observer
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-import com.google.android.gms.common.api.ApiException
 import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
 import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.databinding.FragmentSettingsBinding
 import com.rohitthebest.passwordsaver.databinding.SettingsFragmentLayoutBinding
-import com.rohitthebest.passwordsaver.other.Constants
 import com.rohitthebest.passwordsaver.other.Constants.EDITTEXT_EMPTY_MESSAGE
-import com.rohitthebest.passwordsaver.other.Constants.ONLINE
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
-import com.rohitthebest.passwordsaver.util.ConversionWithGson.Companion.convertAppSettingToJson
-import com.rohitthebest.passwordsaver.util.FirebaseServiceHelper.Companion.uploadDocumentToFireStore
-import com.rohitthebest.passwordsaver.util.Functions.Companion.hide
-import com.rohitthebest.passwordsaver.util.Functions.Companion.isInternetAvailable
-import com.rohitthebest.passwordsaver.util.Functions.Companion.show
-import com.rohitthebest.passwordsaver.util.Functions.Companion.showNoInternetMessage
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
+import com.rohitthebest.passwordsaver.util.onTextChangedListener
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
+
+//private const val TAG = "SettingsFragment"
 
 @AndroidEntryPoint
-class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedChangeListener {
+class SettingsFragment : Fragment(R.layout.fragment_settings), View.OnClickListener {
 
-    private val TAG = "SettingsFragment"
     private val appSettingViewModel: AppSettingViewModel by viewModels()
     private val passwordViewModel: PasswordViewModel by viewModels()
 
@@ -60,34 +37,18 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
     private val binding get() = _binding!!
     private lateinit var includeBinding: SettingsFragmentLayoutBinding
 
-    private var appSetting: AppSetting? = null
-    private var savedPasswordList: ArrayList<Password>? = null
-
-    private lateinit var mAuth: FirebaseAuth
-    private lateinit var googleSignInClient: GoogleSignInClient
+    private lateinit var appSetting: AppSetting
+    private var savedPasswordList: List<Password> = emptyList()
 
     private var appPassword = ""
-
-    private var isRadioButtonChangeListenerEnabled = false
-
-    private var isOnlineModeInitially = false
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-
-        _binding = FragmentSettingsBinding.inflate(inflater, container, false)
-        return binding.root
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        _binding = FragmentSettingsBinding.bind(view)
+
         includeBinding = binding.include
 
-        disableSaveBtn()
         initListeners()
         getAppSetting()
         getSavedPasswordList()
@@ -97,67 +58,48 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
         try {
 
-            appSettingViewModel.getAppSetting().observe(viewLifecycleOwner, Observer {
+            appSettingViewModel.getAppSetting().observe(viewLifecycleOwner) { setting ->
 
-                if (it != null) {
+                if (setting != null) {
 
-                    appSetting = it
-
+                    appSetting = setting
                     updateUI()
+                } else {
+
+                    showToast(requireContext(), "Something went wrong!!")
+                    requireActivity().onBackPressed()
                 }
 
-            })
+            }
 
-         } catch (e: Exception) {
+        } catch (e: Exception) {
 
-             e.printStackTrace()
-         }
+            e.printStackTrace()
+        }
      }
 
     private fun getSavedPasswordList() {
 
         try {
 
-            passwordViewModel.getAllPasswordsList().observe(viewLifecycleOwner, Observer {
+            passwordViewModel.getAllPasswordsList().observe(viewLifecycleOwner) { passwords ->
 
-                if (it.isNotEmpty()) {
+                savedPasswordList = passwords
+            }
 
-                    it.forEach { password ->
-
-                        savedPasswordList?.add(password)
-                    }
-                }
-
-                enableSaveBtn()
-            })
-
-         } catch (e: Exception) {
-             e.printStackTrace()
-         }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
      }
 
      private fun updateUI() {
 
-         appSetting?.let {
+         if (::appSetting.isInitialized) {
 
-             if (it.mode == ONLINE) {
-
-                 isOnlineModeInitially = true
-                 includeBinding.modeChangeRG.check(includeBinding.onlineModeRB.id)
-             } else {
-                 isOnlineModeInitially = false
-                 includeBinding.modeChangeRG.check(includeBinding.offlineModeRB.id)
-             }
-
-             includeBinding.deleteCB.isChecked =
-                 it.isPasswordRequiredForDeleting == getString(R.string.t)
-
-             includeBinding.fingerprintCB.isChecked =
-                 it.isFingerprintEnabled == getString(R.string.t)
-
-             appPassword = it.appPassword
+             includeBinding.deleteCB.isChecked = appSetting.isPasswordRequiredForDeleting
+             includeBinding.fingerprintCB.isChecked = appSetting.isFingerprintEnabled
+             appPassword = appSetting.appPassword
          }
-         isRadioButtonChangeListenerEnabled = true
      }
 
      private fun initListeners() {
@@ -166,7 +108,6 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
          binding.saveBtn.setOnClickListener(this)
          includeBinding.changePasswordIB.setOnClickListener(this)
          includeBinding.changePasswordTV.setOnClickListener(this)
-         includeBinding.modeChangeRG.setOnCheckedChangeListener(this)
      }
 
     override fun onClick(v: View?) {
@@ -175,11 +116,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
             binding.saveBtn.id -> {
 
-                //saving the appSetting database changes leaving the mode changes
-
                 saveAppSettingChanges()
-
-                //todo : save changes
             }
             binding.backBtn.id -> {
                 requireActivity().onBackPressed()
@@ -194,36 +131,14 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
 
     private fun saveAppSettingChanges() {
 
-        //not updating the mode for now
+        appSetting.appPassword = appPassword
+        appSetting.isFingerprintEnabled = includeBinding.fingerprintCB.isChecked
+        appSetting.isPasswordRequiredForDeleting = includeBinding.deleteCB.isChecked
 
-        appSetting?.appPassword = appPassword
-        appSetting?.isFingerprintEnabled = includeBinding.fingerprintCB.isChecked.toString()
-        appSetting?.isPasswordRequiredForDeleting = includeBinding.deleteCB.isChecked.toString()
+        appSettingViewModel.insert(appSetting)
 
-        if (!isOnlineModeInitially) {
-
-            appSettingViewModel.insert(appSetting!!)
-
-            requireActivity().onBackPressed()
-        } else {
-
-            if (isInternetAvailable(requireContext())) {
-
-                uploadDocumentToFireStore(
-                    requireContext(),
-                    convertAppSettingToJson(appSetting)!!,
-                    getString(R.string.appSetting),
-                    appSetting?.key!!
-                )
-
-                appSettingViewModel.insert(appSetting!!)
-
-                requireActivity().onBackPressed()
-            } else {
-
-                showNoInternetMessage(requireContext())
-            }
-        }
+        showToast(requireContext(), "Settings saved")
+        requireActivity().onBackPressed()
 
     }
 
@@ -298,7 +213,7 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
         val encryptedPassword =
             EncryptData().encryptWithSHA(oldPasswordET.editText?.text.toString().trim())
 
-        if (encryptedPassword != appSetting?.appPassword) {
+        if (encryptedPassword != appSetting.appPassword) {
 
             oldPasswordET.error = "Password incorrect!!!"
             return false
@@ -316,347 +231,45 @@ class SettingsFragment : Fragment(), View.OnClickListener, RadioGroup.OnCheckedC
         val confirmNewPasswordET =
             customView.findViewById<TextInputLayout>(R.id.confirmNewPasswordET)
 
-        oldPasswordET.editText?.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(
-                s: CharSequence?,
-                start: Int,
-                count: Int,
-                after: Int
-            ) {
+        oldPasswordET.editText?.onTextChangedListener { s ->
+
+            if (s?.trim()?.isEmpty()!!) {
+
+                oldPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+            } else {
+
+                oldPasswordET.error = null
             }
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+        }
 
-                if (s?.trim()?.isEmpty()!!) {
+        newPasswordET.editText?.addTextChangedListener { s ->
 
-                    oldPasswordET.error = EDITTEXT_EMPTY_MESSAGE
-                } else {
+            if (s?.trim()?.isEmpty()!!) {
 
-                    oldPasswordET.error = null
-                }
+                newPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+            } else {
+
+                newPasswordET.error = null
             }
 
-            override fun afterTextChanged(s: Editable?) {}
-        })
+        }
 
-        newPasswordET.editText?.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(
-                s: CharSequence?,
-                start: Int,
-                count: Int,
-                after: Int
-            ) {
-            }
+        confirmNewPasswordET.editText?.addTextChangedListener { s ->
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+            if (s?.trim()?.isEmpty()!!) {
 
-                if (s?.trim()?.isEmpty()!!) {
+                confirmNewPasswordET.error = EDITTEXT_EMPTY_MESSAGE
+            } else {
 
-                    newPasswordET.error = EDITTEXT_EMPTY_MESSAGE
-                } else {
-
-                    newPasswordET.error = null
-                }
-            }
-
-            override fun afterTextChanged(s: Editable?) {}
-        })
-
-        confirmNewPasswordET.editText?.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(
-                s: CharSequence?,
-                start: Int,
-                count: Int,
-                after: Int
-            ) {
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-
-                if (s?.trim()?.isEmpty()!!) {
-
-                    confirmNewPasswordET.error = EDITTEXT_EMPTY_MESSAGE
-                } else {
-
-                    confirmNewPasswordET.error = null
-                }
-            }
-
-            override fun afterTextChanged(s: Editable?) {}
-        })
-
-
-    }
-
-    override fun onCheckedChanged(radioGroup: RadioGroup?, checkedId: Int) {
-
-        if (isRadioButtonChangeListenerEnabled) {
-
-            if (isOnlineModeInitially && checkedId == includeBinding.offlineModeRB.id) {
-
-                //todo : change the mode in password database
-                //todo : ask for deletion of password from fireStore
-            }
-
-            if (!isOnlineModeInitially && checkedId == includeBinding.onlineModeRB.id) {
-
-                //todo : change the mode in password database
-                //todo : also change the secret key of the saved passwords
-                //todo : sign in the user and upload all the password to firestore along with app settings
+                confirmNewPasswordET.error = null
             }
         }
     }
 
-    /*private fun deleteDataFromFireStore(it: AppSetting) {
+    override fun onDestroyView() {
+        super.onDestroyView()
 
-        if (savedPasswordList?.isNotEmpty()!!) {
-            savedPasswordList?.forEach { password ->
-
-                password.uid = ""
-                passwordViewModel.insert(password)
-            }
-        }
-
-        val appSettingMessage = it.uid
-
-        val passwordListMessage = if (savedPasswordList?.isNotEmpty()!!) {
-
-            convertPasswordListToJson(savedPasswordList)
-        } else {
-            ""
-        }
-
-        Log.d(TAG, "$appSettingMessage")
-        Log.d(TAG, "$passwordListMessage")
-
-        val foreGroundServiceIntent =
-            Intent(requireContext(), DeleteAppSettingAndPasswordService::class.java)
-        foreGroundServiceIntent.putExtra(
-            DELETE_APPSETTING_SERVICE_MESSAGE,
-            appSettingMessage
-        )
-        foreGroundServiceIntent.putExtra(
-            DELETE_PASSWORD_SERVICE_MESSAGE,
-            passwordListMessage
-        )
-
-        ContextCompat.startForegroundService(
-            requireContext(),
-            foreGroundServiceIntent
-        )
-
-
-        it.uid = ""
-        it.mode = OFFLINE
-        appSettingViewModel.insert(it)
-
-        requireActivity().onBackPressed()
+        _binding = null
     }
-*/
-/*
-     private fun uploadAppSettingToFireStore(it: AppSetting) {
-
-         it.uid = mAuth.currentUser?.uid
-         it.mode = ONLINE
-
-         appSettingViewModel.insert(it)
-
-         val foreGroundServiceIntent =
-             Intent(requireContext(), UploadAppSettingsService::class.java)
-         foreGroundServiceIntent.putExtra(
-             APP_SETTING_SERVICE_MESSAGE,
-             convertAppSettingToJson(it)
-         )
-
-         ContextCompat.startForegroundService(
-             requireContext(),
-             foreGroundServiceIntent
-         )
-
-         requireActivity().onBackPressed()
-     }
-*/
-
-     // [START signin]
-     private fun signIn() {
-         val signInIntent = googleSignInClient.signInIntent
-         startActivityForResult(
-             signInIntent,
-             Constants.RC_SIGN_IN
-         )
-     }
-     // [END signin]
-
-
-     override fun onActivityCreated(savedInstanceState: Bundle?) {
-         super.onActivityCreated(savedInstanceState)
-         mAuth = Firebase.auth
-
-         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-             .requestIdToken(getString(R.string.default_web_client_id))
-             .requestEmail()
-             .build()
-
-         googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso)
-     }
-
-     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-         super.onActivityResult(requestCode, resultCode, data)
-
-         // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
-         if (requestCode == Constants.RC_SIGN_IN) {
-             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-             try {
-                 // Google Sign In was successful, authenticate with Firebase
-                 val account = task.getResult(ApiException::class.java)!!
-                 Log.d(TAG, "firebaseAuthWithGoogle:" + account.id)
-
-                 firebaseAuthWithGoogle(account.idToken!!)
-
-             } catch (e: ApiException) {
-                 // Google Sign In failed, update UI appropriately
-                 Log.w(TAG, "Google sign in failed", e)
-                 // [START_EXCLUDE]
-                 showToast(requireContext(), "SignIn Un-successful")
-             }
-         }
-
-         if (resultCode != Activity.RESULT_OK) {
-
-             return
-         }
-     }
-
-/*
-     private fun changePassword(newPassword: String) {
-
-         appSetting?.let {
-
-             if (it.mode == ONLINE) {
-
-                 it.appPassword = newPassword
-
-                 if (isInternetAvailable(requireContext())) {
-
-                     val foreGroundServiceIntent =
-                         Intent(requireContext(), UploadAppSettingsService::class.java)
-                     foreGroundServiceIntent.putExtra(
-                         APP_SETTING_SERVICE_MESSAGE,
-                         convertAppSettingToJson(it)
-                     )
-
-                     ContextCompat.startForegroundService(
-                         requireContext(),
-                         foreGroundServiceIntent
-                     )
-
-                     appSettingViewModel.insert(it)
-                     showToast(requireContext(), "Password Changed")
-                 } else {
-
-                     showToast(requireContext(), NO_INTERNET_MESSAGE)
-                     showToast(requireContext(), "Cannot change the password!!!", Toast.LENGTH_LONG)
-                 }
-
-             } else {
-
-                 it.appPassword = newPassword
-                 appSettingViewModel.insert(it)
-                 showToast(requireContext(), "Password Changed")
-             }
-
-         }
-     }
-*/
-
-    private fun firebaseAuthWithGoogle(idToken: String) {
-
-        showProgressBar()
-
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-
-        mAuth.signInWithCredential(credential)
-            .addOnCompleteListener(requireActivity()) { task ->
-                if (task.isSuccessful) {
-                    // Sign in success, update UI with the signed-in user's information
-                    Log.d(TAG, "signInWithCredential:success")
-
-                    showToast(requireContext(), "SignIn successful")
-                    showToast(requireContext(), "signInWithCredential:success")
-
-                    enableSaveBtn()
-                    isRadioButtonChangeListenerEnabled = false
-                    includeBinding.modeChangeRG.check(includeBinding.onlineModeRB.id)
-
-                    GlobalScope.launch {
-                        delay(200)
-                        withContext(Dispatchers.Main) {
-
-                            isRadioButtonChangeListenerEnabled = true
-                        }
-                    }
-
-                } else {
-                    // If sign in fails, display a message to the user.
-                    Log.w(TAG, "signInWithCredential:failure", task.exception)
-                    showToast(requireContext(), "Authentication Failed.")
-
-                    isRadioButtonChangeListenerEnabled = false
-                    includeBinding.modeChangeRG.check(includeBinding.offlineModeRB.id)
-                    enableSaveBtn()
-                    hideProgressBar()
-
-                    GlobalScope.launch {
-                        delay(200)
-                        withContext(Dispatchers.Main) {
-
-                            isRadioButtonChangeListenerEnabled = true
-                        }
-                    }
-
-                 }
-                 hideProgressBar()
-             }
-     }
-
-
-     private fun showProgressBar() {
-
-         try {
-             binding.progressBar.show()
-         } catch (e: IllegalStateException) {
-             e.printStackTrace()
-         }
-     }
-
-     private fun hideProgressBar() {
-         try {
-             binding.progressBar.hide()
-         } catch (e: IllegalStateException) {
-             e.printStackTrace()
-         }
-     }
-
-     private fun enableSaveBtn() {
-
-         try {
-             binding.saveBtn.isEnabled = true
-         } catch (e: IllegalStateException) {
-             e.printStackTrace()
-         }
-     }
-
-     private fun disableSaveBtn() {
-         try {
-             binding.saveBtn.isEnabled = false
-         } catch (e: IllegalStateException) {
-             e.printStackTrace()
-         }
-     }
-
-     override fun onDestroyView() {
-         super.onDestroyView()
-
-         _binding = null
-     }
 }
