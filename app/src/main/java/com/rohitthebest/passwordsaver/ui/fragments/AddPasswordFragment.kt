@@ -170,6 +170,7 @@ class AddPasswordFragment : Fragment(R.layout.fragment_add_password), View.OnCli
             // update password
 
             receivedPassword.modified = System.currentTimeMillis()
+            receivedPassword.siteName = binding.siteNameET.editText?.text.toString().trim()
             receivedPassword.userName = binding.userNameET.editText?.text.toString().trim()
             receivedPassword.password = encryptedPassword ?: ""
             receivedPassword.siteLink = binding.siteLinkET.editText?.text.toString().trim()
