@@ -203,7 +203,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     private var isPasswordRequiredForDeleting = false
 
-    private fun checkPasswordValidation() {
+    private fun checkPasswordValidation(isPasswordValidationForDeletion: Boolean = false) {
 
         Functions.checkForPasswordValidation(
             requireContext(),
@@ -211,7 +211,15 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             "Cancel",
             {
                 // on Success
-                showPasswordInBottomSheet()
+
+                if (isPasswordValidationForDeletion) {
+
+                    showDialogForDeletingPassword()
+                } else {
+
+                    showPasswordInBottomSheet()
+                }
+
             }, {
                 // onFailure
                 showToast(requireContext(), "Password doesn't match!!!")
@@ -291,7 +299,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                 if (appSetting?.isPasswordRequiredForDeleting == true) {
 
                     isPasswordRequiredForDeleting = true
-                    checkPasswordValidation()
+                    checkPasswordValidation(true)
 
                 } else {
 

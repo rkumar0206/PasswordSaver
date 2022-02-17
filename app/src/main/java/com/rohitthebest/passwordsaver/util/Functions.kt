@@ -235,7 +235,7 @@ class Functions {
                 cancelOnTouchOutside(false)
 
                 input(
-                    hint = "Enter your password",
+                    hint = "Enter the app password",
                     inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD,
                     allowEmpty = false
                 ) { _, inputString ->
