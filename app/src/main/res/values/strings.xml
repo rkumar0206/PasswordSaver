@@ -66,6 +66,7 @@
     <string name="include_digits">Include digits</string>
     <string name="enter_the_characters_you_want_to_include">Enter the characters you want to include</string>
     <string name="include_only_digits">Include only digits</string>
+    <string name="export_passwords">Export passwords</string>
 
     <string-array name="security_questions">
         <item>"What is the name of your school?"</item>
