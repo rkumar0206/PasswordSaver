@@ -1,6 +1,5 @@
 package com.rohitthebest.passwordsaver.ui.fragments
 
-import android.annotation.SuppressLint
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.os.Bundle
@@ -43,7 +42,6 @@ import java.util.*
 
 private const val TAG = "HomeFragment"
 
-@SuppressLint("CheckResult")
 @AndroidEntryPoint
 class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.OnClickListener,
     View.OnClickListener {
@@ -212,7 +210,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
         Functions.checkForPasswordValidation(
             requireContext(),
             appSetting!!,
-            "Cancel",
+            getString(R.string.cancel),
             {
                 // on Success
 
@@ -244,7 +242,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             override fun onAuthenticationError(errorCode: Int, errString: CharSequence?) {
                 super.onAuthenticationError(errorCode, errString)
 
-                showToast(requireContext(), "Authentication Failed")
+                showToast(requireContext(), getString(R.string.authentication_failed))
             }
 
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult?) {
@@ -275,7 +273,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         passwordDialog = MaterialDialog(requireContext(), BottomSheet()).show {
 
-            title(text = "Your Password")
+            title(text = getString(R.string.your_password))
             customView(
                 R.layout.show_password_bottomsheet_layout,
                 scrollable = true
@@ -458,7 +456,6 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                                     dialog.dismiss()
                                 }.create()
                                 .show()
-
 
                         } else {
 

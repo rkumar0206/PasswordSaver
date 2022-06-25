@@ -80,6 +80,9 @@
     <string name="enter_the_app_password">Enter the app password</string>
     <string name="password_exported">Password exported</string>
     <string name="password_exported_note">Password is exported to Internal storage/Documents/PasswordSaver.\n\nNote : The pdf file requires password and it is same as this app password.\n\nIMPORTANT : Please don\'t share this file with anyone and delete the file as soon as your work is done.</string>
+    <string name="site_name_">Site name</string>
+    <string name="authentication_failed">Authentication Failed</string>
+    <string name="your_password">Your Password</string>
 
     <string-array name="security_questions">
         <item>"What is the name of your school?"</item>
