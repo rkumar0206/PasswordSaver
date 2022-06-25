@@ -3,6 +3,7 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/Rohit/AndroidStudioProjects/PasswordSaver/app/src/main/res/layout/activity_main.xml" value="0.22083333333333333" />
         <entry key="..\:/Users/Rohit/AndroidStudioProjects/PasswordSaver/app/src/main/res/layout/adapter_show_saved_password.xml" value="0.22083333333333333" />
         <entry key="..\:/Users/Rohit/AndroidStudioProjects/PasswordSaver/app/src/main/res/layout/dialog_change_password.xml" value="0.22083333333333333" />
         <entry key="..\:/Users/Rohit/AndroidStudioProjects/PasswordSaver/app/src/main/res/layout/fragment_add_password.xml" value="0.22083333333333333" />

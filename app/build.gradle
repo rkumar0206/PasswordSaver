@@ -111,6 +111,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.itextpdf/itextpdf
     implementation 'com.itextpdf:itextpdf:5.5.13'
+    implementation 'org.bouncycastle:bcprov-jdk15on:1.64'
 
     testImplementation "io.mockk:mockk:1.10.5"
 

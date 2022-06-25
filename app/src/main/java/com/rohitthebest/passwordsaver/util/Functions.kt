@@ -4,15 +4,14 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.KeyguardManager
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.Intent
+import android.content.*
 import android.content.pm.PackageManager
 import android.hardware.biometrics.BiometricPrompt
 import android.net.Uri
 import android.os.Build
 import android.os.CancellationSignal
+import android.os.Environment
+import android.provider.MediaStore
 import android.text.InputType
 import android.util.Log
 import android.view.View
@@ -22,13 +21,19 @@ import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.input.input
+import com.itextpdf.text.*
+import com.itextpdf.text.pdf.PdfWriter
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
+import com.rohitthebest.passwordsaver.database.entity.Password
 import com.rohitthebest.passwordsaver.other.Constants.NO_INTERNET_MESSAGE
 import com.rohitthebest.passwordsaver.other.encryption.EncryptData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.FileOutputStream
+import java.io.OutputStream
+import java.util.*
 
 class Functions {
 
@@ -43,11 +48,6 @@ class Functions {
             } catch (e: java.lang.Exception) {
                 e.printStackTrace()
             }
-        }
-
-        fun isInternetAvailable(context: Context): Boolean {
-
-            return CheckNetworkConnection().isInternetAvailable(context)
         }
 
         fun showNoInternetMessage(context: Context) {
@@ -135,21 +135,18 @@ class Functions {
 
         fun openLinkInBrowser(url: String?, context: Context) {
 
-            if (isInternetAvailable(context)) {
-                url?.let {
+            url?.let {
 
-                    try {
-                        Log.d(TAG, "Loading Url in default browser.")
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(checkUrl(it)))
-                        context.startActivity(intent)
-                    } catch (e: Exception) {
-                        showToast(context, e.message.toString())
-                        e.printStackTrace()
-                    }
+                try {
+                    Log.d(TAG, "Loading Url in default browser.")
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(checkUrl(it)))
+                    context.startActivity(intent)
+                } catch (e: Exception) {
+                    showToast(context, e.message.toString())
+                    e.printStackTrace()
                 }
-            } else {
-                showToast(context, NO_INTERNET_MESSAGE)
             }
+
         }
 
         @RequiresApi(Build.VERSION_CODES.P)
@@ -257,6 +254,159 @@ class Functions {
             }
         }
 
+        suspend fun generatePasswordPdfDocumentAndExportToStorage(
+            activity: Activity,
+            passwordList: List<Password>,
+            userPassword: String,
+            appSecretKey: String
+        ) {
 
+            withContext(Dispatchers.IO) {
+
+                val passwordParagraph = makeParagraphOfPassword(passwordList, appSecretKey)
+
+                exportSavedImagesLinkToFile(
+                    activity,
+                    passwordParagraph,
+                    userPassword,
+                    System.currentTimeMillis().toString()
+                )
+            }
+        }
+
+        private fun makeParagraphOfPassword(
+            passwordList: List<Password>,
+            appSecretKey: String
+        ): Paragraph {
+
+            val font: Font =
+                FontFactory.getFont(FontFactory.COURIER, 14f, BaseColor.BLACK)
+
+            val paragraph = Paragraph("", font)
+
+            if (passwordList.isNotEmpty()) {
+
+                paragraph.add("Passwords (${passwordList.size})\n")
+                paragraph.add("---------------------------------------------------\n\n")
+
+                passwordList.forEach { password ->
+
+                    paragraph.add("SiteName : ${password.siteName}\n")
+                    paragraph.add("UserName : ${password.userName}\n")
+                    paragraph.add(
+                        "Password : ${
+                            try {
+                                EncryptData().decryptAES(password.password, appSecretKey)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                e.message
+                            }
+                        }\n"
+                    )
+                    if (password.siteLink.isValid()) paragraph.add("Site Url : ${password.siteLink}\n")
+                    paragraph.add("\n---------------------------------------------------\n\n")
+                }
+            }
+
+            return paragraph
+        }
+
+        private suspend fun exportSavedImagesLinkToFile(
+            activity: Activity,
+            paragraph: Paragraph,
+            userPassword: String,
+            fileName: String = "password"
+        ) {
+
+            withContext(Dispatchers.IO) {
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+
+                    val resolver = activity.contentResolver
+
+                    val contentValues = ContentValues().apply {
+                        put(MediaStore.MediaColumns.DISPLAY_NAME, "$fileName.pdf")
+                        put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                        put(
+                            MediaStore.MediaColumns.RELATIVE_PATH,
+                            "${Environment.DIRECTORY_DOCUMENTS}/PasswordSaver"
+                        )
+                    }
+
+                    val uri = resolver?.insert(
+                        MediaStore.Files.getContentUri("external"),
+                        contentValues
+                    )
+
+                    uri?.let { pdfUri ->
+
+                        resolver.openOutputStream(pdfUri).use { fout ->
+
+                            try {
+
+                                makePdfOfPasswordWithEncryption(fout, paragraph, userPassword)
+
+                            } catch (e: java.lang.Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+
+                    }
+                } else {
+
+                    try {
+                        val file = Environment
+                            .getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS + "/PasswordSaver/$fileName.pdf")
+
+                        makePdfOfPasswordWithEncryption(
+                            FileOutputStream(file),
+                            paragraph,
+                            userPassword
+                        )
+
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+
+            }
+        }
+
+        private suspend fun makePdfOfPasswordWithEncryption(
+            fout: OutputStream?,
+            passwordParagraph: Paragraph,
+            userPassword: String
+        ) {
+            withContext(Dispatchers.IO) {
+
+                try {
+                    val document = Document()
+
+                    Log.d(TAG, "makePdfOfPasswordWithEncryption: $passwordParagraph")
+
+                    val pdfWriter = PdfWriter.getInstance(document, fout)
+
+                    pdfWriter.setEncryption(
+                        userPassword.toByteArray(),
+                        UUID.randomUUID().toString().toByteArray(),
+                        PdfWriter.ALLOW_PRINTING,
+                        PdfWriter.ENCRYPTION_AES_128
+                    )
+
+                    document.open()
+
+                    document.add(passwordParagraph)
+
+                    document.close()
+
+                    fout?.close()
+
+                } catch (e: java.lang.Exception) {
+
+                    e.printStackTrace()
+                }
+
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
 import android.os.Bundle
+import android.text.InputType
 import android.util.Log
 import android.view.View
 import android.widget.ImageButton
@@ -19,6 +20,7 @@ import com.afollestad.materialdialogs.MaterialDialog
 import com.afollestad.materialdialogs.bottomsheets.BottomSheet
 import com.afollestad.materialdialogs.customview.customView
 import com.afollestad.materialdialogs.customview.getCustomView
+import com.afollestad.materialdialogs.input.input
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.rohitthebest.passwordsaver.R
 import com.rohitthebest.passwordsaver.database.entity.AppSetting
@@ -30,6 +32,7 @@ import com.rohitthebest.passwordsaver.ui.viewModels.AppSettingViewModel
 import com.rohitthebest.passwordsaver.ui.viewModels.PasswordViewModel
 import com.rohitthebest.passwordsaver.util.*
 import com.rohitthebest.passwordsaver.util.Functions.Companion.copyToClipBoard
+import com.rohitthebest.passwordsaver.util.Functions.Companion.generatePasswordPdfDocumentAndExportToStorage
 import com.rohitthebest.passwordsaver.util.Functions.Companion.hideKeyBoard
 import com.rohitthebest.passwordsaver.util.Functions.Companion.openLinkInBrowser
 import com.rohitthebest.passwordsaver.util.Functions.Companion.showToast
@@ -56,6 +59,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
     private lateinit var passwordRVAdapter: SavedPasswordRVAdapter
 
     private var passwrd: Password? = Password()
+    private var passwordDialog: MaterialDialog? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -203,7 +207,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
     private var isPasswordRequiredForDeleting = false
 
-    private fun checkPasswordValidation(isPasswordValidationForDeletion: Boolean = false) {
+    private fun checkPasswordValidation() {
 
         Functions.checkForPasswordValidation(
             requireContext(),
@@ -212,9 +216,10 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             {
                 // on Success
 
-                if (isPasswordValidationForDeletion) {
+                if (isPasswordRequiredForDeleting) {
 
                     showDialogForDeletingPassword()
+                    isPasswordRequiredForDeleting = false
                 } else {
 
                     showPasswordInBottomSheet()
@@ -222,7 +227,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
             }, {
                 // onFailure
-                showToast(requireContext(), "Password doesn't match!!!")
+                showToast(requireContext(), getString(R.string.passord_not_match))
                 checkPasswordValidation()
             },
             {
@@ -268,7 +273,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
          * showing password information in bottomSheet
          */
 
-        MaterialDialog(requireContext(), BottomSheet()).show {
+        passwordDialog = MaterialDialog(requireContext(), BottomSheet()).show {
 
             title(text = "Your Password")
             customView(
@@ -299,7 +304,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                 if (appSetting?.isPasswordRequiredForDeleting == true) {
 
                     isPasswordRequiredForDeleting = true
-                    checkPasswordValidation(true)
+                    checkPasswordValidation()
 
                 } else {
 
@@ -338,14 +343,14 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
     private fun showDialogForDeletingPassword() {
 
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Are you sure?")
-            .setMessage("After deleting you will lose this password.")
-            .setPositiveButton("DELETE") { dialog, _ ->
+            .setTitle(getString(R.string.are_you_sure))
+            .setMessage(getString(R.string.after_deleting_will_lose_this_password))
+            .setPositiveButton(getString(R.string.delete)) { dialog, _ ->
 
                 deletePassword(passwrd!!)
                 dialog.dismiss()
             }
-            .setNegativeButton("Cancel") { dialog, _ ->
+            .setNegativeButton(getString(R.string.cancel)) { dialog, _ ->
 
                 dialog.dismiss()
             }
@@ -361,11 +366,11 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
             passwordViewModel.delete(password)
 
             binding.root.showSnackBarWithActionAndDismissListener(
-                "Password deleted",
-                "Undo",
+                getString(R.string.password_deleted),
+                getString(R.string.undo),
                 {
                     passwordViewModel.insert(password)
-                    showToast(requireContext(), "Password restored")
+                    showToast(requireContext(), getString(R.string.password_restored))
                 },
                 {}
             )
@@ -379,7 +384,7 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
 
         customView.findViewById<TextView>(R.id.sitenameTV).text = if (passwrd?.siteName == "") {
 
-            "No site name"
+            getString(R.string.no_site_name)
         } else {
 
             passwrd?.siteName
@@ -414,6 +419,62 @@ class HomeFragment : Fragment(R.layout.fragment_home), SavedPasswordRVAdapter.On
                 findNavController().navigate(R.id.action_homeFragment_to_passwordGeneratorFragment)
                 true
             }
+
+        binding.toolbar.menu.findItem(R.id.home_menu_export_password).setOnMenuItemClickListener {
+
+            MaterialDialog(requireContext()).show {
+
+                title(text = getString(R.string.password))
+                positiveButton(text = getString(R.string.confirm))
+                cancelOnTouchOutside(false)
+
+                input(
+                    hint = getString(R.string.enter_the_app_password),
+                    inputType = InputType.TYPE_TEXT_VARIATION_PASSWORD,
+                    allowEmpty = false
+                ) { _, inputString ->
+
+                    val encryptPassword = EncryptData().encryptWithSHA(inputString.toString())
+
+                    if (encryptPassword == appSetting?.appPassword) {
+
+                        if (passwordRVAdapter.currentList.isNotEmpty()) {
+
+                            lifecycleScope.launch {
+
+                                generatePasswordPdfDocumentAndExportToStorage(
+                                    requireActivity(),
+                                    passwordRVAdapter.currentList,
+                                    inputString.toString(),
+                                    appSetting?.secretKey!!
+                                )
+                            }
+
+                            MaterialAlertDialogBuilder(requireContext())
+                                .setTitle(getString(R.string.password_exported))
+                                .setMessage(getString(R.string.password_exported_note))
+                                .setPositiveButton("Ok") { dialog, _ ->
+
+                                    dialog.dismiss()
+                                }.create()
+                                .show()
+
+
+                        } else {
+
+                            showToast(requireContext(), getString(R.string.no_passwords_added))
+                        }
+
+                    } else {
+                        showToast(requireContext(), getString(R.string.passord_not_match))
+                    }
+                }
+            }.negativeButton(text = getString(R.string.cancel)) {
+                it.dismiss()
+            }
+
+            true
+        }
 
     }
 
