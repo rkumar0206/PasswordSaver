@@ -1,5 +1,5 @@
 # PasswordSaver
-This app let's save your password in most secure way.
+This app let's save your password in most secured way. 
 
 ## Features
 
@@ -7,3 +7,5 @@ This app let's save your password in most secure way.
 - Password is encrypted using the SHA and AES
 - Fingerprint support
 - Password generator
+- Export Password to password protected pdf file.
+- No Permission needed.
